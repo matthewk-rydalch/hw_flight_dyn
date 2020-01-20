@@ -43,12 +43,11 @@ class spacecraft_viewer():
             state.theta  # pitch angle
             state.psi  # yaw angle
         """
-
         spacecraft_position = np.array([[state.pn], [state.pe], [-state.h]])  # NED coordinates
         # attitude of spacecraft as a rotation matrix R from body to inertial
         R = self._Euler2Rotation(state.phi, state.theta, state.psi)
         # rotate and translate points defining spacecraft
-        first = 1 #0=rotate first, anything else = translate first
+        first = 0 #0=rotate first, anything else = translate first
         if first == 0:
             rotated_points = self._rotate_points(self.points, R) #rotate first
             new_points = self._translate_points(rotated_points, spacecraft_position) #rotate first

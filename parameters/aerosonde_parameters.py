@@ -10,7 +10,7 @@ from tools.tools import Euler2Quaternion
 pn0 = 0.  # initial north position
 pe0 = 0.  # initial east position
 pd0 = -20.0  # initial down position
-u0 = 25.  # initial velocity along body x-axis
+u0 = 0.#25.  # initial velocity along body x-axis
 v0 = 0.  # initial velocity along body y-axis
 w0 = 0.  # initial velocity along body z-axis
 phi0 = 0.  # initial roll angle
@@ -36,6 +36,7 @@ Jx = 0.8244 #kg m^2
 Jy = 1.135
 Jz = 1.759
 Jxz = 0.1204
+# Jxz = 0.0
 S_wing = 0.55
 b = 2.8956
 c = 0.18994
