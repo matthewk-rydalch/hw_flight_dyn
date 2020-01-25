@@ -103,6 +103,44 @@ class mav_dynamics:
         :param delta: np.matrix(delta_a, delta_e, delta_r, delta_t)
         :return: Forces and Moments on the UAV np.matrix(Fx, Fy, Fz, Ml, Mn, Mm)
         """
+        #common terms
+        s_al = np.sin(al)
+        c_al = np.cos(al)
+        #coefficients
+        Cxa = -Cda*np.cos(al)+Cla*np.sin(al)
+        Cxqa = -Cdq*np.cos(al)+Clq*np.sin(al)
+        Cxdea = -Cdde*np.cos(al)+Clde*sin(al)
+        Cza = -Cda*s_al-Cla*c_al
+        Czqa = -Cdq*s_al-Clq*c_al
+        Czdea = -Cdde*s_al
+
+        fg = np.array([[-m*g*np.sin(th)],
+                       [m*g*np.cos(th)*np.sin(phi)],
+                       [m*g*np.cos(th)*np.cos(phi)]])
+        
+        fa = 1/2*ro*Va**2*S*np.array([[Cxa+Cxqa*c/(2*Va)*q+Cxdea*del_e],
+                                      [Cy0+Cyb*B+Cyp*b/(2*Va)*P+Cyr*b/(2*Va)*r+Cyda*del_a+Cydr*del_r],
+                                      [Cza+Czqa*c/(2*Va)*q+Czdea*del_e]])
+        
+        fp = 1/2*ro*Sp*Cp*np.array([[(km*del_t)**2-Va**2],
+                                    [0.0],
+                                    [0.0]])
+
+        Ma = 1/2*ro*Va**2*S*np.array([[b*(Clo+Clb*B+Clp*b/(2*Va)*P+Clr*b/(2*Va)*r+Clda*del_a+Cldr*del_r)],
+                                      [c*(Cm0+Cma*al+Cmq*c/(2*Va)*q+Cmde*del_e)],
+                                      [b*(Cno+Cnb*B+Cnp*b/(2*Va)*p+Cnr*b/(2*Va)*r+Cnda*del_a_Cndr*del_r)]])
+
+        Mt = np.array([[-Ktp*(Ko*del_t)**2],
+                       [0.0],
+                       [0.0]])
+
+        fx = Fg[0][0]+fa[0][0]+fp[0][0]
+        fy = Fg[1][0]+fa[1][0]+fp[1][0]
+        fz = Fg[2][0]+fa[2][0]+fp[2][0]
+        Mx = Ma[0][0]+Mt[0][0]
+        My = Ma[1][0]+Mt[1][0]
+        Mz = Ma[2][0]+Mt[2][0]
+
         self._forces[0] = fx
         self._forces[1] = fy
         self._forces[2] = fz
