@@ -185,7 +185,10 @@ class mav_dynamics:
         self._alpha = np.arctan2(Va_b[2], Va_b[0])[0]
 
         # compute sideslip angle
-        self._beta = np.arcsin(Va_b[1], Va_b[0])[0]
+        print('Va_b1 =', Va_b[1])
+        print('Va =', self._Va)
+        self._beta = np.arcsin(Va_b[1][0]/self._Va)
+        print('beta = ', self._beta)
 
     def _forces_moments(self, delta):
         """
@@ -266,7 +269,7 @@ class mav_dynamics:
         / (2.*np.pi))*Va+MAV.KQ**2/MAV.R_motor
         c = MAV.C_Q2*MAV.rho*np.power(MAV.D_prop,3)*Va**2-(MAV.KQ/MAV.R_motor)*V_in+MAV.KQ*MAV.i0
         # Consider only positive root
-        Omega_op = (b+np.sqrt(b**2-4*a*c))/(2.*a)
+        Omega_op = (-b+np.sqrt(b**2-4*a*c))/(2.*a)
         # compute advance ratio
         J_op = 2*np.pi*Va/(Omega_op*MAV.D_prop)
         # compute nondimens ionalized coefficients of thrust and torque
@@ -276,6 +279,8 @@ class mav_dynamics:
         n = Omega_op/(2*np.pi)
         Tp = MAV.rho*n*2*np.power(MAV.D_prop,4)*C_T
         Qm = -MAV.rho*n**2*np.power(MAV.D_prop,5)*C_Q
+        # Tp = C_T*MAV.rho*Omega_op**2*MAV.D_prop**4/(2.0*np.pi)**2 #tried these, they match the new material
+        # Qp = MAV.KQ*(1/MAV.R_motor*(V_in-MAV.K_V*Omega_op)-MAV.i0)
 
         
         #forces
@@ -318,9 +323,9 @@ class mav_dynamics:
         # fx = 0.0
         # fy = 0.0
         # fz = 0.0
-        Mx = 0.0
-        My = 0.0
-        Mz = 0.0
+        # Mx = 0.0
+        # My = 0.0
+        # Mz = 0.0
         return np.array([[fx, fy, fz, Mx, My, Mz]]).T
 
     def _update_msg_true_state(self):
