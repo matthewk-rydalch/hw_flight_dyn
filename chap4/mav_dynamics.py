@@ -149,15 +149,6 @@ class mav_dynamics:
         e2_dot = 1 / 2 * (q * e0 - r * e1 + p * e3)
         e3_dot = 1 / 2 * (r * e0 + q * e1 - p * e2)
 
-        # This block is used to normalize the quaternions, but that has already been done in the update state function
-        # # rotational kinematics eq B.3 modified
-        # lmb = 1000 #lambda, best value was given on page 257
-        # normE = np.sqrt(e0**2+e1**2+e2**2+e3**2) #also defined the same way in update state function
-        # e0_dot = 1/2*(lmb*(1.0-normE**2)*e0 - p*e1 - q*e2 - r*e3)
-        # e1_dot = 1/2*(p*e0 + lmb*(1.0-normE**2)*e1 + r*e2 - q*e3)
-        # e2_dot = 1/2*(q*e0 - r*e1 + lmb*(1.0-normE**2)*e2 + p*e3)
-        # e3_dot = 1/2*(r*e0 + q*e1 - p*e2 + lmb*(1.0-normE**2)*e3)
-
         # rotatonal dynamics eq. B.4
         p_dot = (r1 * p * q - r2 * q * r) + (r3 * l + r4 * n)
         q_dot = (r5 * p * r - r6 * (p ** 2 - r ** 2)) + (1 / Jy * m)
@@ -170,10 +161,19 @@ class mav_dynamics:
 
 
     def _update_velocity_data(self, wind=np.zeros((6,1))):
+
+        e0 = self._state[6]
+        e1 = self._state[7]
+        e2 = self._state[8]
+        e3 = self._state[9]
+        e_array = np.array([e0, e1, e2, e3])
+        [phi, th, psi] = Quaternion2Euler(e_array)
+
         # compute airspeed
-        self._wind = np.array([[wind[0][0]+wind[3][0]],
-                              [wind[1][0]+wind[4][0]],
-                              [wind[2][0]+wind[5][0]]])
+        wind_constant = self.Euler2Rotation(phi, th, psi)@wind[0:3]
+        self._wind = np.array([[wind_constant[0][0]+wind[3][0]],
+                              [wind_constant[1][0]+wind[4][0]],
+                              [wind_constant[2][0]+wind[5][0]]])
         Va_b = np.array([[self._state[3][0]],#-self._wind[0][0]],
                          [self._state[4][0]],#-self._wind[1][0]],
                          [self._state[5][0]]])#-self._wind[2][0]]])
@@ -279,10 +279,8 @@ class mav_dynamics:
         C_Q = MAV.C_Q2*J_op**2+MAV.C_Q1*J_op+MAV.C_Q0
         # add thrust and torque due to propeller
         n = Omega_op/(2*np.pi)
-        #Tp = MAV.rho*n**2*np.power(MAV.D_prop,4)*C_T
         Tp = C_T*MAV.rho*Omega_op**2*MAV.D_prop**4/(2*np.pi)**2
         Qm = -MAV.rho*n**2*np.power(MAV.D_prop,5)*C_Q
-        # Tp = C_T*MAV.rho*Omega_op**2*MAV.D_prop**4/(2.0*np.pi)**2 #tried these, they match the new material
         Qp = MAV.KQ*(1/MAV.R_motor*(V_in-MAV.K_V*Omega_op)-MAV.i0)
 
 
@@ -295,7 +293,7 @@ class mav_dynamics:
             fa = np.array([[0.0],[0.0],[0.0]])
         else:
             fa = 1/2*MAV.rho*Va**2*MAV.S_wing*np.array([[Cx_a+Cxq_a*MAV.c/(2*Va)*q+Cx_de_a*delta_e],
-                                                        [C_Y_0+C_Y_beta*beta+C_Y_p*MAV.b/(2.0*Va)*p+C_Y_r*MAV.b/(22.0*Va)*r+C_Y_delta_a*delta_a+C_Y_delta_r*delta_r],
+                                                        [C_Y_0+C_Y_beta*beta+C_Y_p*MAV.b/(2.0*Va)*p+C_Y_r*MAV.b/(2.0*Va)*r+C_Y_delta_a*delta_a+C_Y_delta_r*delta_r],
                                                         [Cz_a+Czq_a*MAV.c/(2*Va)*q+Cz_de_a*delta_e]])
 
         fp = np.array([[Tp],
@@ -350,11 +348,12 @@ class mav_dynamics:
         # self.msg_true_state.Vg = np.linalg.norm(Vg_b)
         # self.msg_true_state.gamma = np.arctan2(Vg_b[2], Vg_b[0])
         # self.msg_true_state.chi = np.arctan2(Vg_b[1], Vg_b[0])
+        print('phi, theta, psi = ', [phi, theta, psi])
         Vg_b = self.Va_b+self._wind
-        R = self._Euler2Rotation(phi, theta, psi)
+        R = self.Euler2Rotation(phi, theta, psi)
         Vg_i = R.T@Vg_b
         self.msg_true_state.Vg = np.linalg.norm(Vg_b)
-        self.msg_true_state.gamma = np.arctan2(Vg_i[2], np.sqrt(Vg_i[0]**2+Vg_i[1]**2))
+        self.msg_true_state.gamma = np.arctan2(-Vg_i[2], np.sqrt(Vg_i[0]**2+Vg_i[1]**2))
         self.msg_true_state.chi = np.arctan2(Vg_i[1], Vg_i[0])
         self.msg_true_state.p = self._state.item(10)
         self.msg_true_state.q = self._state.item(11)
@@ -362,7 +361,7 @@ class mav_dynamics:
         self.msg_true_state.wn = self._wind.item(0)
         self.msg_true_state.we = self._wind.item(1)
 
-    def _Euler2Rotation(self, phi, theta, psi):
+    def Euler2Rotation(self, phi, theta, psi):
         """
         Converts euler angles to rotation matrix (R_b^i, i.e., body to inertial)
         """

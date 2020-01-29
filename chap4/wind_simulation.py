@@ -11,8 +11,8 @@ import numpy as np
 class wind_simulation:
     def __init__(self, Ts):
         # steady state wind defined in the inertial frame
-        self._steady_state = np.array([[0.0],
-                                       [0.0],
+        self._steady_state = np.array([[7.0],
+                                       [2.0],
                                        [0.0]])
 
         #given low altitude and light turbulance

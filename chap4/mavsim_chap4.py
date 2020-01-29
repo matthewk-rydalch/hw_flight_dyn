@@ -38,8 +38,14 @@ while sim_time < SIM.end_time:
     #-------set control surfaces-------------
     delta_e = -0.12
     delta_t = 1.0
-    delta_a = 0.04
+    delta_a = 0.03
     delta_r = 0.0
+
+    # delta_e = -0.1
+    # delta_t = 0.8
+    # delta_a = 0.01
+    # delta_r = 0.01
+
     delta = np.array([[delta_e, delta_t, delta_a, delta_r]]).T  # transpose to make it a column vector
 
     #-------physical system-------------
