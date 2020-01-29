@@ -23,7 +23,7 @@ class wind_simulation:
         sig_v = sig_u
         sig_w = 0.7
 
-        Va = 20.0
+        Va = 0.0
 
         a1 = sig_u*np.sqrt(2*Va/Lu)
         a2 = sig_v*np.sqrt(3*Va/Lv)
@@ -54,4 +54,3 @@ class wind_simulation:
                          [self.w_w.update(np.random.randn())]])
         #gust = np.array([[0.],[0.],[0.]])
         return np.concatenate(( self._steady_state, gust ))
-

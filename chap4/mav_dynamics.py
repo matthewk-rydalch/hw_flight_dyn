@@ -2,7 +2,7 @@
 mav_dynamics
     - this file implements the dynamic equations of motion for MAV
     - use unit quaternion for the attitude state
-    
+
 """
 import sys
 sys.path.append('..')
@@ -185,10 +185,7 @@ class mav_dynamics:
         self._alpha = np.arctan2(Va_b[2], Va_b[0])[0]
 
         # compute sideslip angle
-        print('Va_b1 =', Va_b[1])
-        print('Va =', self._Va)
         self._beta = np.arcsin(Va_b[1][0]/self._Va)
-        print('beta = ', self._beta)
 
     def _forces_moments(self, delta):
         """
@@ -252,7 +249,9 @@ class mav_dynamics:
         delta_t = delta[3][0]
 
         #coefficients
-        Cx_a = -C_D_alpha*c_al+C_L_alpha*s_al
+        CL = C_L_0+C_L_alpha*al
+        CD = C_D_0+C_D_alpha*al
+        Cx_a = -CD*c_al+CL*s_al
         Cxq_a = -C_D_q*c_al+C_L_q*s_al
         Cx_de_a = -C_D_delta_e*c_al+C_L_delta_e*s_al
         Cz_a = -C_D_alpha*s_al-C_L_alpha*c_al
@@ -282,7 +281,7 @@ class mav_dynamics:
         # Tp = C_T*MAV.rho*Omega_op**2*MAV.D_prop**4/(2.0*np.pi)**2 #tried these, they match the new material
         # Qp = MAV.KQ*(1/MAV.R_motor*(V_in-MAV.K_V*Omega_op)-MAV.i0)
 
-        
+
         #forces
         fg = np.array([[-MAV.mass*MAV.gravity*np.sin(th)],
                        [MAV.mass*MAV.gravity*np.cos(th)*np.sin(phi)],
@@ -294,7 +293,7 @@ class mav_dynamics:
             fa = 1/2*MAV.rho*Va**2*MAV.S_wing*np.array([[Cx_a+Cxq_a*MAV.c/(2*Va)*q+Cx_de_a*delta_e],
                                                         [C_Y_0+C_Y_beta*beta+C_Y_p*MAV.b/(2.0*Va)*p+C_Y_r*MAV.b/(22.0*Va)*r+C_Y_delta_a*delta_a+C_Y_delta_r*delta_r],
                                                         [Cz_a+Czq_a*MAV.c/(2*Va)*q+Cz_de_a*delta_e]])
-        
+
         fp = np.array([[Tp],
                        [0.0],
                        [0.0]])
@@ -313,9 +312,9 @@ class mav_dynamics:
         fx = fg[0][0]+fa[0][0]+fp[0][0]
         fy = fg[1][0]+fa[1][0]+fp[1][0]
         fz = fg[2][0]+fa[2][0]+fp[2][0]
-        Mx = Ma[0][0]+Mt[0][0]
-        My = Ma[1][0]+Mt[1][0]
-        Mz = Ma[2][0]+Mt[2][0]
+        Mx = 0.0#Ma[0][0]+Mt[0][0]
+        My = 0.0#Ma[1][0]+Mt[1][0]
+        Mz = 0.0#Ma[2][0]+Mt[2][0]
 
         self._forces[0] = fx
         self._forces[1] = fy
