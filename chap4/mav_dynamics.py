@@ -166,7 +166,6 @@ class mav_dynamics:
         # collect the derivative of the states
         x_dot = np.array([[pn_dot, pe_dot, pd_dot, u_dot, v_dot, w_dot,
                            e0_dot, e1_dot, e2_dot, e3_dot, p_dot, q_dot, r_dot]]).T
-
         return x_dot
 
 
@@ -175,17 +174,21 @@ class mav_dynamics:
         self._wind = np.array([[wind[0][0]+wind[3][0]],
                               [wind[1][0]+wind[4][0]],
                               [wind[2][0]+wind[5][0]]])
-        Va_b = np.array([[self._state[3][0]-self._wind[0][0]],
-                         [self._state[4][0]-self._wind[1][0]],
-                         [self._state[5][0]-self._wind[2][0]]])
+        Va_b = np.array([[self._state[3][0]],#-self._wind[0][0]],
+                         [self._state[4][0]],#-self._wind[1][0]],
+                         [self._state[5][0]]])#-self._wind[2][0]]])
 
         self._Va = np.linalg.norm(Va_b)
 
-        # compute angle of attack
-        self._alpha = np.arctan2(Va_b[2], Va_b[0])[0]
+        if self._Va == 0.0:
+            self._alpha = 0.0
+            self._beta = 0.0
+        else:
+            # compute angle of attack
+            self._alpha = np.arctan2(Va_b[2], Va_b[0])[0]
 
-        # compute sideslip angle
-        self._beta = np.arcsin(Va_b[1][0]/self._Va)
+            # compute sideslip angle
+            self._beta = np.arcsin(Va_b[1][0]/self._Va)
 
     def _forces_moments(self, delta):
         """
@@ -193,7 +196,7 @@ class mav_dynamics:
         :param delta: np.matrix(delta_a, delta_e, delta_r, delta_t)
         :return: Forces and Moments on the UAV np.matrix(Fx, Fy, Fz, Ml, Mn, Mm)
         """
-
+        print('e, t, a , r = ', delta)
         #longitudinal coefficients
         C_L_0 = MAV.C_L_0
         C_L_alpha = MAV.C_L_alpha
@@ -243,10 +246,10 @@ class mav_dynamics:
         p = self._state[10][0]
         q = self._state[11][0]
         r = self._state[12][0]
-        delta_a = delta[0][0]
-        delta_e = delta[1][0]
-        delta_r = delta[2][0]
-        delta_t = delta[3][0]
+        delta_e = delta[0][0]
+        delta_t = delta[1][0]
+        delta_a = delta[2][0]
+        delta_r = delta[3][0]
 
         #coefficients
         CL = C_L_0+C_L_alpha*al
@@ -254,7 +257,7 @@ class mav_dynamics:
         Cx_a = -CD*c_al+CL*s_al
         Cxq_a = -C_D_q*c_al+C_L_q*s_al
         Cx_de_a = -C_D_delta_e*c_al+C_L_delta_e*s_al
-        Cz_a = -C_D_alpha*s_al-C_L_alpha*c_al
+        Cz_a = -CD*s_al-CL*c_al
         Czq_a = -C_D_q*s_al-C_L_q*c_al
         Cz_de_a = -C_D_delta_e*s_al
 
@@ -276,10 +279,11 @@ class mav_dynamics:
         C_Q = MAV.C_Q2*J_op**2+MAV.C_Q1*J_op+MAV.C_Q0
         # add thrust and torque due to propeller
         n = Omega_op/(2*np.pi)
-        Tp = MAV.rho*n*2*np.power(MAV.D_prop,4)*C_T
+        #Tp = MAV.rho*n**2*np.power(MAV.D_prop,4)*C_T
+        Tp = C_T*MAV.rho*Omega_op**2*MAV.D_prop**4/(2*np.pi)**2
         Qm = -MAV.rho*n**2*np.power(MAV.D_prop,5)*C_Q
         # Tp = C_T*MAV.rho*Omega_op**2*MAV.D_prop**4/(2.0*np.pi)**2 #tried these, they match the new material
-        # Qp = MAV.KQ*(1/MAV.R_motor*(V_in-MAV.K_V*Omega_op)-MAV.i0)
+        Qp = MAV.KQ*(1/MAV.R_motor*(V_in-MAV.K_V*Omega_op)-MAV.i0)
 
 
         #forces
@@ -311,20 +315,22 @@ class mav_dynamics:
 
         fx = fg[0][0]+fa[0][0]+fp[0][0]
         fy = fg[1][0]+fa[1][0]+fp[1][0]
-        fz = fg[2][0]+fa[2][0]+fp[2][0]
-        Mx = 0.0#Ma[0][0]+Mt[0][0]
-        My = 0.0#Ma[1][0]+Mt[1][0]
-        Mz = 0.0#Ma[2][0]+Mt[2][0]
+        fz = fa[2][0]+fp[2][0]+fg[2][0]
+        Mx = Ma[0][0]+Mt[0][0]
+        My = Ma[1][0]+Mt[1][0]
+        Mz = Ma[2][0]+Mt[2][0]
 
-        self._forces[0] = fx
-        self._forces[1] = fy
-        self._forces[2] = fz
         # fx = 0.0
         # fy = 0.0
         # fz = 0.0
         # Mx = 0.0
         # My = 0.0
         # Mz = 0.0
+
+        self._forces[0] = fx
+        self._forces[1] = fy
+        self._forces[2] = fz
+
         return np.array([[fx, fy, fz, Mx, My, Mz]]).T
 
     def _update_msg_true_state(self):
@@ -340,12 +346,42 @@ class mav_dynamics:
         self.msg_true_state.phi = phi
         self.msg_true_state.theta = theta
         self.msg_true_state.psi = psi
+        # Vg_b = self.Va_b+self._wind
+        # self.msg_true_state.Vg = np.linalg.norm(Vg_b)
+        # self.msg_true_state.gamma = np.arctan2(Vg_b[2], Vg_b[0])
+        # self.msg_true_state.chi = np.arctan2(Vg_b[1], Vg_b[0])
         Vg_b = self.Va_b+self._wind
+        R = self._Euler2Rotation(phi, theta, psi)
+        Vg_i = R.T@Vg_b
         self.msg_true_state.Vg = np.linalg.norm(Vg_b)
-        self.msg_true_state.gamma = np.arctan2(Vg_b[2], Vg_b[0])
-        self.msg_true_state.chi = np.arctan2(Vg_b[1], Vg_b[0])
+        self.msg_true_state.gamma = np.arctan2(Vg_i[2], np.sqrt(Vg_i[0]**2+Vg_i[1]**2))
+        self.msg_true_state.chi = np.arctan2(Vg_i[1], Vg_i[0])
         self.msg_true_state.p = self._state.item(10)
         self.msg_true_state.q = self._state.item(11)
         self.msg_true_state.r = self._state.item(12)
         self.msg_true_state.wn = self._wind.item(0)
         self.msg_true_state.we = self._wind.item(1)
+
+    def _Euler2Rotation(self, phi, theta, psi):
+        """
+        Converts euler angles to rotation matrix (R_b^i, i.e., body to inertial)
+        """
+        # only call sin and cos once for each angle to speed up rendering
+        c_phi = np.cos(phi)
+        s_phi = np.sin(phi)
+        c_theta = np.cos(theta)
+        s_theta = np.sin(theta)
+        c_psi = np.cos(psi)
+        s_psi = np.sin(psi)
+
+        R_roll = np.array([[1, 0, 0],
+                           [0, c_phi, s_phi],
+                           [0, -s_phi, c_phi]])
+        R_pitch = np.array([[c_theta, 0, -s_theta],
+                            [0, 1, 0],
+                            [s_theta, 0, c_theta]])
+        R_yaw = np.array([[c_psi, s_psi, 0],
+                          [-s_psi, c_psi, 0],
+                          [0, 0, 1]])
+        R = R_roll @ R_pitch @ R_yaw  # inertial to body (Equation 2.4 in book)
+        return R.T  # transpose to return body to inertial
