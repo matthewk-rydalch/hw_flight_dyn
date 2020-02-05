@@ -196,7 +196,6 @@ class mav_dynamics:
         :param delta: np.matrix(delta_a, delta_e, delta_r, delta_t)
         :return: Forces and Moments on the UAV np.matrix(Fx, Fy, Fz, Ml, Mn, Mm)
         """
-        print('e, t, a , r = ', delta)
         #longitudinal coefficients
         C_L_0 = MAV.C_L_0
         C_L_alpha = MAV.C_L_alpha

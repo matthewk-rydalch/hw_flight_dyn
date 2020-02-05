@@ -15,17 +15,18 @@ def compute_trim(mav, Va, gamma):
     # define initial state and input
     pn0 = 0.0
     pe0 = 0.0
-    h0 = 20.0
+    h0 = -20.0
     u0 = 20.0
     v0 = 0.0
     w0 = 0.0
-    e0_0 = 0.0
+    e0_0 = 1.0
     e1_0 = 0.0
     e2_0 = 0.0
     e3_0 = 0.0
     p0 = 0.0
     q0 = 0.0
     r0 = 0.0
+    # delta_a, delta_e, delta_r, delta_t
     delta_e0 = -0.1
     delta_t0 = 0.8
     delta_a0 = 0.03
@@ -70,7 +71,7 @@ def trim_objective(x, mav, Va, gamma):
     # define initial state and input
     pn_dot = 0.0
     pe_dot = 0.0
-    h_dot = Va*np.sin(gamma)
+    h_dot = -Va*np.sin(gamma)
     u_dot = 0.0
     v_dot = 0.0
     w_dot = 0.0
@@ -81,22 +82,27 @@ def trim_objective(x, mav, Va, gamma):
     q_dot = 0.0
     r_dot = 0.0
 
-    J_vec = np.zeros((13,1))
-    J_vec[0] = pn_dot - mav._state[0]
-    J_vec[1] = pe_dot - mav._state[1]
-    J_vec[2] = h_dot - mav._state[2]
-    J_vec[3] = u_dot - mav._state[3]
-    J_vec[4] = v_dot - mav._state[4]
-    J_vec[5] = w_dot - mav._state[5]
-    J_vec[6] = 0.0 - mav._state[6] #since the R value is really big/infinite, these dot values are 0.
-    J_vec[7] = 0.0 - mav._state[7]
-    J_vec[8] = 0.0 - mav._state[8]
-    J_vec[9] = 0.0 - mav._state[9]
-    J_vec[10] = p_dot - mav._state[10]
-    J_vec[11] = q_dot - mav._state[11]
-    J_vec[12] = r_dot - mav._state[12]
+    mav._state = np.array([x[0:13]]).T
+    mav._update_velocity_data()
+    forces_moments = mav._forces_moments(np.array([x[13:17]]).T)
+    xdot = mav._derivatives(mav._state, forces_moments)
 
-    J = np.linalg.norm(J_vec)
+    J_vec = np.zeros((13,1))
+    J_vec[0] = pn_dot - xdot[0][0]
+    J_vec[1] = pe_dot - xdot[1][0]
+    J_vec[2] = h_dot - xdot[2][0]
+    J_vec[3] = u_dot - xdot[3][0]
+    J_vec[4] = v_dot - xdot[4][0]
+    J_vec[5] = w_dot - xdot[5][0]
+    J_vec[6] = 0.0 - xdot[6][0] #since the R value is really big/infinite, these dot values are 0, 0, 0, 0.
+    J_vec[7] = 0.0 - xdot[7][0]
+    J_vec[8] = 0.0 - xdot[8][0]
+    J_vec[9] = 0.0 - xdot[9][0]
+    J_vec[10] = p_dot - xdot[10][0]
+    J_vec[11] = q_dot - xdot[11][0]
+    J_vec[12] = r_dot - xdot[12][0]
+
+    J = np.linalg.norm(J_vec)**2
 
     return J
 
