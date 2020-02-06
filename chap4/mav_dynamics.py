@@ -58,8 +58,15 @@ class mav_dynamics:
             wind is the wind vector in inertial coordinates
             Ts is the time step between function calls.
         '''
-        # get forces and moments acting on rigid bod
+        # get forces and moments acting on rigid body
         forces_moments = self._forces_moments(delta)
+        # forces_moments[0][0] = 0.0
+        # forces_moments[1][0] = 0.0#np.zeros((6,1))
+        # forces_moments[2][0] = 0.0#forces_moments[2][0]
+        # forces_moments[3][0] = 0.0#np.zeros((6,1))
+        # forces_moments[4][0] = 0.0#np.zeros((6,1))
+        # forces_moments[5][0] = 0.0#np.zeros((6,1))
+
 
         # Integrate ODE using Runge-Kutta RK4 algorithm
         time_step = self._ts_simulation
@@ -68,6 +75,12 @@ class mav_dynamics:
         k3 = self._derivatives(self._state + time_step/2.*k2, forces_moments)
         k4 = self._derivatives(self._state + time_step*k3, forces_moments)
         self._state += time_step/6 * (k1 + 2*k2 + 2*k3 + k4)
+
+        # self._state[2] = -20.
+        # self._state[6] = 1.
+        # self._state[7] = 0.
+        # self._state[8] = 0.
+        # self._state[9] = 0.
 
         # normalize the quaternion
         e0 = self._state.item(6)
@@ -245,10 +258,10 @@ class mav_dynamics:
         p = self._state[10][0]
         q = self._state[11][0]
         r = self._state[12][0]
-        delta_e = delta[0][0]
-        delta_t = delta[1][0]
-        delta_a = delta[2][0]
-        delta_r = delta[3][0]
+        delta_a = delta[0][0]
+        delta_e = delta[1][0]
+        delta_r = delta[2][0]
+        delta_t = delta[3][0]
 
         #coefficients
         CL = C_L_0+C_L_alpha*al
@@ -270,7 +283,11 @@ class mav_dynamics:
         / (2.*np.pi))*Va+MAV.KQ**2/MAV.R_motor
         c = MAV.C_Q2*MAV.rho*np.power(MAV.D_prop,3)*Va**2-(MAV.KQ/MAV.R_motor)*V_in+MAV.KQ*MAV.i0
         # Consider only positive root
-        Omega_op = (-b+np.sqrt(b**2-4*a*c))/(2.*a)
+
+        if 4*a*c > b**2:
+            Omega_op = -b/2.*a
+        else:
+            Omega_op = (-b+np.sqrt(b**2-4*a*c))/(2.*a)
         # compute advance ratio
         J_op = 2*np.pi*Va/(Omega_op*MAV.D_prop)
         # compute nondimens ionalized coefficients of thrust and torque
@@ -312,7 +329,7 @@ class mav_dynamics:
 
         fx = fg[0][0]+fa[0][0]+fp[0][0]
         fy = fg[1][0]+fa[1][0]+fp[1][0]
-        fz = fa[2][0]+fp[2][0]+fg[2][0]
+        fz = fg[2][0]+fa[2][0]+fp[2][0]
         Mx = Ma[0][0]+Mt[0][0]
         My = Ma[1][0]+Mt[1][0]
         Mz = Ma[2][0]+Mt[2][0]
@@ -347,7 +364,7 @@ class mav_dynamics:
         # self.msg_true_state.Vg = np.linalg.norm(Vg_b)
         # self.msg_true_state.gamma = np.arctan2(Vg_b[2], Vg_b[0])
         # self.msg_true_state.chi = np.arctan2(Vg_b[1], Vg_b[0])
-        print('phi, theta, psi = ', [phi, theta, psi])
+
         Vg_b = self.Va_b+self._wind
         R = self.Euler2Rotation(phi, theta, psi)
         Vg_i = R.T@Vg_b

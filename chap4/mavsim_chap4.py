@@ -36,20 +36,22 @@ sim_time = SIM.start_time
 print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
     #-------set control surfaces-------------
-    delta_e = -0.12
-    delta_t = 1.0
+
+    # delta_a = 0.00069454
+    # delta_e = -0.11817021
+    # delta_r = 0.00130226
+    # delta_t = 0.65916553
+
     delta_a = 0.03
+    delta_e = -0.12
     delta_r = 0.0
+    delta_t = 1.0
 
-    # delta_e = -0.1
-    # delta_t = 0.8
-    # delta_a = 0.01
-    # delta_r = 0.01
-
-    delta = np.array([[delta_e, delta_t, delta_a, delta_r]]).T  # transpose to make it a column vector
+    delta = np.array([[delta_a, delta_e, delta_r, delta_t]]).T  # transpose to make it a column vector
 
     #-------physical system-------------
-    current_wind = wind.update()  # get the new wind vector
+    # current_wind = wind.update()  # get the new wind vector
+    current_wind = np.zeros((6, 1))
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------

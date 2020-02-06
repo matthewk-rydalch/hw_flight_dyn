@@ -33,8 +33,8 @@ wind = wind_simulation(SIM.ts_simulation)
 mav = mav_dynamics(SIM.ts_simulation)
 
 # use compute_trim function to compute trim state and trim input
-Va = 20.
-gamma = 0.*np.pi/180.
+Va = 25.
+gamma = 0.0*np.pi/180.
 trim_state, trim_input = compute_trim(mav, Va, gamma)
 mav._state = trim_state  # set the initial state of the mav to the trim state
 delta = trim_input  # set input to constant constant trim input
@@ -47,7 +47,17 @@ delta = trim_input  # set input to constant constant trim input
 
 # initialize the simulation time
 sim_time = SIM.start_time
+# delta_a = 0.00069454
+# delta_e = -0.11817021
+# delta_r = 0.00130226
+# delta_t = 0.65916553
 
+delta_a = 0.03
+delta_e = -0.12
+delta_r = 0.0
+delta_t = 1.0
+
+delta2 = np.array([[delta_a, delta_e, delta_r, delta_t]]).T
 # main simulation loop
 print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
