@@ -16,6 +16,7 @@ from parameters.simulation_parameters import ts_simulation as Ts
 def compute_tf_model(mav, trim_state, trim_input):
     # trim values
 
+
     return T_phi_delta_a, T_chi_phi, T_theta_delta_e, T_h_theta, T_h_Va, T_Va_delta_t, T_Va_theta, T_beta_delta_r
 
 def compute_ss_model(mav, trim_state, trim_input):

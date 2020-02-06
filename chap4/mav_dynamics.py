@@ -157,15 +157,18 @@ class mav_dynamics:
         w_dot = (q * u - p * v) + fz / mass
 
         # rotational kinematics eq B.3
-        e0_dot = 1 / 2 * (-p * e1 - q * e2 - r * e3)
-        e1_dot = 1 / 2 * (p * e0 + r * e2 - q * e3)
-        e2_dot = 1 / 2 * (q * e0 - r * e1 + p * e3)
-        e3_dot = 1 / 2 * (r * e0 + q * e1 - p * e2)
+        e0_dot = 0.5 * (-p * e1 - q * e2 - r * e3)
+        e1_dot = 0.5 * (p * e0 + r * e2 - q * e3)
+        e2_dot = 0.5 * (q * e0 - r * e1 + p * e3)
+        e3_dot = 0.5 * (r * e0 + q * e1 - p * e2)
 
         # rotatonal dynamics eq. B.4
-        p_dot = (r1 * p * q - r2 * q * r) + (r3 * l + r4 * n)
-        q_dot = (r5 * p * r - r6 * (p ** 2 - r ** 2)) + (1 / Jy * m)
-        r_dot = (r7 * p * q - r1 * q * r) + (r4 * l + r8 * n)
+        # p_dot = (r1 * p * q - r2 * q * r) + (r3 * l + r4 * n)
+        # q_dot = (r5 * p * r - r6 * (p ** 2 - r ** 2)) + (1 / Jy * m)
+        # r_dot = (r7 * p * q - r1 * q * r) + (r4 * l + r8 * n)
+        p_dot = (MAV.gamma1 * p * q - MAV.gamma2 * q * r) + (MAV.gamma3 * l + MAV.gamma4 * n)
+        q_dot = (MAV.gamma5 * p * r - MAV.gamma6 * (p ** 2 - r ** 2)) + (m / MAV.Jy)
+        r_dot = (MAV.gamma7 * p * q - MAV.gamma1 * q * r) + (MAV.gamma4 * l + MAV.gamma8 * n)
 
         # collect the derivative of the states
         x_dot = np.array([[pn_dot, pe_dot, pd_dot, u_dot, v_dot, w_dot,
@@ -187,9 +190,9 @@ class mav_dynamics:
         self._wind = np.array([[wind_constant[0][0]+wind[3][0]],
                               [wind_constant[1][0]+wind[4][0]],
                               [wind_constant[2][0]+wind[5][0]]])
-        Va_b = np.array([[self._state[3][0]],#-self._wind[0][0]],
-                         [self._state[4][0]],#-self._wind[1][0]],
-                         [self._state[5][0]]])#-self._wind[2][0]]])
+        Va_b = np.array([[self._state[3][0]-self._wind[0][0]],
+                         [self._state[4][0]-self._wind[1][0]],
+                         [self._state[5][0]-self._wind[2][0]]])
 
         self._Va = np.linalg.norm(Va_b)
 
@@ -254,7 +257,7 @@ class mav_dynamics:
         Va = self._Va
         s_al = np.sin(al)
         c_al = np.cos(al)
-        [th, phi, psi] = Quaternion2Euler(self._state[6:10])
+        [phi, th, psi] = Quaternion2Euler(self._state[6:10])
         p = self._state[10][0]
         q = self._state[11][0]
         r = self._state[12][0]
@@ -264,14 +267,17 @@ class mav_dynamics:
         delta_t = delta[3][0]
 
         #coefficients
-        CL = C_L_0+C_L_alpha*al
-        CD = C_D_0+C_D_alpha*al
+        sig_a = (1 + np.exp(-M*(al-alpha0))+np.exp(M*(al+alpha0)))/((1+np.exp(-M*(al-alpha0)))*(1+np.exp(M*(al+alpha0))))
+        CL = (1-sig_a)*(C_L_0+C_L_alpha*al)+sig_a*(2*np.sign(al)*s_al**2*c_al)
+        CD = C_D_p + (C_L_0 + C_L_alpha*al)**2/(np.pi*MAV.e*MAV.AR)
+        # CL = C_L_0+C_L_alpha*al
+        # CD = C_D_0+C_D_alpha*al
         Cx_a = -CD*c_al+CL*s_al
         Cxq_a = -C_D_q*c_al+C_L_q*s_al
         Cx_de_a = -C_D_delta_e*c_al+C_L_delta_e*s_al
         Cz_a = -CD*s_al-CL*c_al
         Czq_a = -C_D_q*s_al-C_L_q*c_al
-        Cz_de_a = -C_D_delta_e*s_al
+        Cz_de_a = -C_D_delta_e*s_al-C_L_delta_e*c_al
 
         # compute t h r u s t and torque due to p r o p ell e r ( See addendum by McLain)
         # map delta_t throttle command(0 t o 1) in to motor input voltage
@@ -286,18 +292,20 @@ class mav_dynamics:
 
         if 4*a*c > b**2:
             Omega_op = -b/2.*a
+            print('imaginary')
         else:
-            Omega_op = (-b+np.sqrt(b**2-4*a*c))/(2.*a)
+            Omega_op = (-b+np.sqrt(b**2-4.0*a*c))/(2.0*a)
         # compute advance ratio
-        J_op = 2*np.pi*Va/(Omega_op*MAV.D_prop)
+        J_op = 2.0*np.pi*Va/(Omega_op*MAV.D_prop)
         # compute nondimens ionalized coefficients of thrust and torque
         C_T = MAV.C_T2*J_op**2+MAV.C_T1*J_op+MAV.C_T0
         C_Q = MAV.C_Q2*J_op**2+MAV.C_Q1*J_op+MAV.C_Q0
         # add thrust and torque due to propeller
-        n = Omega_op/(2*np.pi)
-        Tp = C_T*MAV.rho*Omega_op**2*MAV.D_prop**4/(2*np.pi)**2
-        Qm = -MAV.rho*n**2*np.power(MAV.D_prop,5)*C_Q
-        Qp = MAV.KQ*(1/MAV.R_motor*(V_in-MAV.K_V*Omega_op)-MAV.i0)
+        n = Omega_op/(2.0*np.pi)
+        Tp = C_T * MAV.rho * n ** 2 * MAV.D_prop ** 4
+        # Tp = C_T*MAV.rho*Omega_op**2*MAV.D_prop**4/(2*np.pi)**2
+        Qm = MAV.rho*n**2*np.power(MAV.D_prop,5)*C_Q
+        Qp = MAV.KQ*(1.0/MAV.R_motor*(V_in-MAV.K_V*Omega_op)-MAV.i0)
 
 
         #forces
@@ -308,9 +316,9 @@ class mav_dynamics:
         if Va == 0.0:
             fa = np.array([[0.0],[0.0],[0.0]])
         else:
-            fa = 1/2*MAV.rho*Va**2*MAV.S_wing*np.array([[Cx_a+Cxq_a*MAV.c/(2*Va)*q+Cx_de_a*delta_e],
+            fa = 0.5*MAV.rho*Va**2*MAV.S_wing*np.array([[Cx_a+Cxq_a*MAV.c/(2.0*Va)*q+Cx_de_a*delta_e],
                                                         [C_Y_0+C_Y_beta*beta+C_Y_p*MAV.b/(2.0*Va)*p+C_Y_r*MAV.b/(2.0*Va)*r+C_Y_delta_a*delta_a+C_Y_delta_r*delta_r],
-                                                        [Cz_a+Czq_a*MAV.c/(2*Va)*q+Cz_de_a*delta_e]])
+                                                        [Cz_a+Czq_a*MAV.c/(2.0*Va)*q+Cz_de_a*delta_e]])
 
         fp = np.array([[Tp],
                        [0.0],
@@ -319,9 +327,9 @@ class mav_dynamics:
         if Va == 0.0:
             Ma = np.array([[0.0],[0.0],[0.0]])
         else:
-            Ma = 1/2*MAV.rho*Va**2*MAV.S_wing*np.array([[MAV.b*(C_ell_0+C_ell_beta*beta+C_ell_p*MAV.b/(2*Va)*p+C_ell_r*MAV.b/(2*Va)*r+C_ell_delta_a*delta_a+C_ell_delta_r*delta_r)],
-                                                        [MAV.c*(C_m_0+C_m_alpha*al+C_m_q*MAV.c/(2*Va)*q+C_m_delta_e*delta_e)],
-                                                        [MAV.b*(C_n_0+C_n_beta*beta+C_n_p*MAV.b/(2*Va)*p+C_n_r*MAV.b/(2*Va)*r+C_n_delta_a*delta_a+C_n_delta_r*delta_r)]])
+            Ma = 0.5*MAV.rho*Va**2*MAV.S_wing*np.array([[MAV.b*(C_ell_0+C_ell_beta*beta+C_ell_p*MAV.b/(2*Va)*p+C_ell_r*MAV.b/(2.0*Va)*r+C_ell_delta_a*delta_a+C_ell_delta_r*delta_r)],
+                                                        [MAV.c*(C_m_0+C_m_alpha*al+C_m_q*MAV.c/(2.0*Va)*q+C_m_delta_e*delta_e)],
+                                                        [MAV.b*(C_n_0+C_n_beta*beta+C_n_p*MAV.b/(2.0*Va)*p+C_n_r*MAV.b/(2.0*Va)*r+C_n_delta_a*delta_a+C_n_delta_r*delta_r)]])
 
         Mt = np.array([[Qm],
                        [0.0],
