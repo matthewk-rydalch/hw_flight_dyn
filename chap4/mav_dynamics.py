@@ -41,8 +41,9 @@ class mav_dynamics:
         self._update_velocity_data()
         # store forces to avoid recalculation in the sensors function
         self._forces = np.array([[0.], [0.], [0.]])
-        self._Va = MAV.u0
+        self._Va = MAV.Va0
         self.Va_b = np.array([[0.], [0.], [0.]])
+        self._Vg = MAV.Va0
         self._alpha = 0
         self._beta = 0
         # initialize true_state message
@@ -196,6 +197,9 @@ class mav_dynamics:
 
         self._Va = np.linalg.norm(Va_b)
 
+        Vg_b = Va_b+self._wind
+        self._Vg = np.linalg.norm(Vg_b)
+
         if self._Va == 0.0:
             self._alpha = 0.0
             self._beta = 0.0
@@ -292,7 +296,6 @@ class mav_dynamics:
 
         if 4*a*c > b**2:
             Omega_op = -b/2.*a
-            print('imaginary')
         else:
             Omega_op = (-b+np.sqrt(b**2-4.0*a*c))/(2.0*a)
         # compute advance ratio
