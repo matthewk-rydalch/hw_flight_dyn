@@ -34,31 +34,30 @@ mav = mav_dynamics(SIM.ts_simulation)
 
 # use compute_trim function to compute trim state and trim input
 Va = 25.
-gamma = 0.0*np.pi/180.
+gamma = 15.0*np.pi/180.
 trim_state, trim_input = compute_trim(mav, Va, gamma)
 mav._state = trim_state  # set the initial state of the mav to the trim state
 delta = trim_input  # set input to constant constant trim input
+long_impulse = trim_input + np.array([[0.0, 5.0, 0.0, 0.0]]).T
+aleron_impulse = np.array([[15.0, 0.0, 0.0, 0.0]]).T
+lat_impulse1 = trim_input + aleron_impulse
+lat_impulse2 = trim_input - aleron_impulse
+long_mode = False
+lat_mode = False
+if lat_mode:
+    doublet = True
+else:
+    doublet = False
 
 # # compute the state space model linearized about trim
 # A_lon, B_lon, A_lat, B_lat = compute_ss_model(mav, trim_state, trim_input)
-# T_phi_delta_a, T_chi_phi, T_theta_delta_e, T_h_theta, \
 T_phi_delta_a, T_chi_phi, T_theta_delta_e, T_h_theta, T_h_Va, T_Va_delta_t, T_Va_theta, T_beta_delta_r \
     = compute_tf_model(mav, trim_state, trim_input)
 
 
 # initialize the simulation time
 sim_time = SIM.start_time
-# delta_a = 0.00069454
-# delta_e = -0.11817021
-# delta_r = 0.00130226
-# delta_t = 0.65916553
 
-delta_a = 0.03
-delta_e = -0.12
-delta_r = 0.0
-delta_t = 1.0
-
-delta2 = np.array([[delta_a, delta_e, delta_r, delta_t]]).T
 # main simulation loop
 print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
@@ -66,8 +65,18 @@ while sim_time < SIM.end_time:
     #-------physical system-------------
     #current_wind = wind.update()  # get the new wind vector
     current_wind = np.zeros((6,1))
-    mav.update_state(delta, current_wind)  # propagate the MAV dynamics
-
+    if long_mode:
+        mav.update_state(long_impulse, current_wind)  # propagate the MAV dynamics
+    elif lat_mode:
+        if doublet:
+            mav.update_state(lat_impulse1, current_wind)  # propagate the MAV dynamics
+        else:
+            mav.update_state(lat_impulse2, current_wind)  # propagate the MAV dynamics
+            lat_mode = False
+    else:
+        mav.update_state(delta, current_wind)  # propagate the MAV dynamics
+    long_mode = False
+    doublet = False
     #-------update viewer-------------
     mav_view.update(mav.msg_true_state)  # plot body of MAV
     data_view.update(mav.msg_true_state, # true states

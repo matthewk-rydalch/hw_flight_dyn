@@ -105,6 +105,31 @@ def compute_tf_model(mav, trim_state, trim_input):
     return T_phi_delta_a, T_chi_phi, T_theta_delta_e, T_h_theta, T_h_Va, T_Va_delta_t, T_Va_theta, T_beta_delta_r
 
 def compute_ss_model(mav, trim_state, trim_input):
+
+    #NOT FINISHED
+    # #retrieve parameters from trim
+    # e_vec = trim_state[6:10]
+    # [phi_star, th_star, psi_star] = Quaternion2Euler(e_vec)
+    # u_star = trim_state[3]
+    # w_star = trim_state[5]
+    #
+    # #retrieve parameters from aerosonde_parameters
+    # g = MAV.gravity
+    #
+    # #define coefficients
+    # Xu = u_star*rho*S/m*(C_X_0+C_X_alpha*alpha_star+C_X_delta_e*delta_e) - rho*S*w_star*C_X_alpha/(2.0*m) + rho*S*c*C_X_q*u_star*q_star/(4.0*m*Va_star) - rho*S_prop*C_prop*w_star/m
+    # Xw = -q_star + w_star*rho*S/m*(C_X_0+C_X_alpha*alpha_star+C_X_delta_e*delta_e) + rho*S*c*C_X_q*w_star*q_star/(4.0*m*Va_star) + rho*S*C_X_alpha*u_star/(2.0*m) - rho*S_prop*C_prop*w_star/m
+    # Xq = -w_star + rho*Va_star*S_C_X_q*c/(4.0*m)
+    # X_delta_e = rho*Va_star**2*S*C_x_delta_e/(2.0*m)
+    # X_delta_t = rho*S_prop*C_prop*k**2*delta_t_star/m
+    # Zu = q_star + u_star*rho*S/m*(C_Z_0+C_Z_alpha*alpha_star+C_Z_delta_e*delta_e_star) - rho*S*C_Z_alpha*w_star/(2.0*m)
+    #
+    # A_lon = np.array([[Xu, Xw, Xq, -g*np.cos(th_star), 0.0],
+    #                   [Zu, Zw, Zq, -g*np.sin(th_star), 0.0],
+    #                   [Mu, Mw, Mq, 0.0, 0.0],
+    #                   [0.0, 0.0, 1.0, 0.0, 0.0],
+    #                   [np.sin(th_star), -np.cos(th_star), 0.0, u_star*np.cos(th_star)+w_star*np.sin(th_star), 0.0]])
+
      return A_lon, B_lon, A_lat, B_lat
 
 def euler_state(x_quat):
