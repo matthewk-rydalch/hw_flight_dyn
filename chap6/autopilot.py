@@ -68,12 +68,13 @@ class autopilot:
 
         # construct output and commanded states
         delta = np.array([[delta_e], [delta_a], [delta_r], [delta_t]])
+
         self.commanded_state.h = cmd.altitude_command
-        self.commanded_state.Va = cmd.airspeed_command
-        self.commanded_state.phi = phi_c
-        self.commanded_state.theta = theta_c
-        self.commanded_state.chi = cmd.course_command
-        return delta, self.commanded_state
+        # self.commanded_state.Va = cmd.airspeed_command
+        # self.commanded_state.phi = phi_c
+        # self.commanded_state.theta = theta_c
+        # self.commanded_state.chi = cmd.course_command
+        # return delta, self.commanded_state
 
     def saturate(self, input, low_limit, up_limit):
         if input <= low_limit:

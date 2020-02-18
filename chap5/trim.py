@@ -9,7 +9,7 @@ sys.path.append('..')
 import numpy as np
 from scipy.optimize import minimize
 from tools.tools import Euler2Quaternion, Quaternion2Euler
-from chap5.compute_models import euler_state, quaternion_state
+from chap5.compute_models import Compute_Models #euler_state, quaternion_state
 
 def compute_trim(mav, Va, gamma, display=False):
     # define initial state and input
