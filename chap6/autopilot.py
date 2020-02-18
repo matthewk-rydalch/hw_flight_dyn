@@ -26,11 +26,12 @@ class autopilot:
                         ki=AP.course_ki,
                         Ts=ts_control,
                         limit=np.radians(30))
-        self.sideslip_from_rudder = pi_control(
-                        kp=AP.sideslip_kp,
-                        ki=AP.sideslip_ki,
-                        Ts=ts_control,
-                        limit=np.radians(45))
+        #We are using yaw damper instead
+        # self.sideslip_from_rudder = pi_control(
+        #                 kp=AP.sideslip_kp,
+        #                 ki=AP.sideslip_ki,
+        #                 Ts=ts_control,
+        #                 limit=np.radians(45))
         self.yaw_damper = transfer_function(
                         num=np.array([[AP.yaw_damper_kp, 0]]),
                         den=np.array([[1, 1/AP.yaw_damper_tau_r]]),
@@ -70,11 +71,11 @@ class autopilot:
         delta = np.array([[delta_e], [delta_a], [delta_r], [delta_t]])
 
         self.commanded_state.h = cmd.altitude_command
-        # self.commanded_state.Va = cmd.airspeed_command
-        # self.commanded_state.phi = phi_c
-        # self.commanded_state.theta = theta_c
-        # self.commanded_state.chi = cmd.course_command
-        # return delta, self.commanded_state
+        self.commanded_state.Va = cmd.airspeed_command
+        self.commanded_state.phi = phi_c
+        self.commanded_state.theta = theta_c
+        self.commanded_state.chi = cmd.course_command
+        return delta, self.commanded_state
 
     def saturate(self, input, low_limit, up_limit):
         if input <= low_limit:

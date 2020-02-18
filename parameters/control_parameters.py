@@ -32,6 +32,8 @@ xsi_h = 0.707
 Wv2 = 10
 xsi_v = 0.707
 tr_v = 1
+tau_r_yaw_damper = 0.5 #0.5 is from the root locus in the supplimental material
+kr_yaw_damper = 0.3 #I completely guessed on this
 
 #parameters for solving kp, kd, ki
 g = MAV.gravity
@@ -56,14 +58,15 @@ roll_kd = (2.0*xsi_phi*wn_phi-TF.a_phi_1)/TF.a_phi_2
 course_kp = 2*xsi_chi*wn_chi*Vg/g
 course_ki = wn_chi**2*Vg/g
 
-#----------sideslip loop-------------
-sideslip_kp = delta_r_max/e_beta_max*np.sign(TF.a_B_2)
-sideslip_ki = 1/TF.a_B_2*((TF.a_B_1+TF.a_B_2*sideslip_kp)/2*xsi_B)**2
+#We are doing yaw damper instead of sideslip loop
+# #----------sideslip loop-------------
+# sideslip_kp = delta_r_max/e_beta_max*np.sign(TF.a_B_2)
+# sideslip_ki = 1/TF.a_B_2*((TF.a_B_1+TF.a_B_2*sideslip_kp)/2*xsi_B)**2
 
 
-# #----------yaw damper-------------
-# yaw_damper_tau_r =
-# yaw_damper_kp =
+#----------yaw damper-------------
+yaw_damper_tau_r = tau_r_yaw_damper
+yaw_damper_kp = kr_yaw_damper #This is supposed to be kr?
 
 #----------pitch loop-------------
 pitch_kp = delta_e_max/e_th_max*np.sign(TF.a_th_3)
@@ -73,6 +76,7 @@ K_theta_DC = pitch_kp*TF.a_th_3/(TF.a_th_2+pitch_kp*TF.a_th_3)
 #----------altitude loop-------------
 altitude_kp = 2*xsi_h*wn_h/(K_theta_DC*Va0)
 altitude_ki = wn_h**2/(K_theta_DC*Va0)
+#TODO add saturation to altitude zone
 #altitude zone is a variable that saturates the altitude zone
 # altitude_zone =
 
