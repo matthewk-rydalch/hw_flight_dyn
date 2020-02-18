@@ -76,9 +76,7 @@ K_theta_DC = pitch_kp*TF.a_th_3/(TF.a_th_2+pitch_kp*TF.a_th_3)
 #----------altitude loop-------------
 altitude_kp = 2*xsi_h*wn_h/(K_theta_DC*Va0)
 altitude_ki = wn_h**2/(K_theta_DC*Va0)
-#TODO add saturation to altitude zone
-#altitude zone is a variable that saturates the altitude zone
-# altitude_zone =
+altitude_zone = 10.0
 
 #---------airspeed hold using throttle---------------
 airspeed_throttle_kp = (2.0*xsi_v*wn_v*TF.a_v_1)/TF.a_v_2

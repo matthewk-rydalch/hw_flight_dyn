@@ -48,6 +48,14 @@ class pi_control:
         self.error_delay_1 = 0.0
 
     def update(self, y_ref, y):
+        error = y_ref-y
+        self.integrator = self.integrator + (self.Ts/2) * (error + self.error_delay_1)
+        self.error_delay_1 = error
+
+        u = self.kp * error + self.ki * error
+
+        u_sat = self._saturate(u)
+
         return u_sat
 
     def _saturate(self, u):
@@ -69,6 +77,11 @@ class pd_control_with_rate:
         self.limit = limit
 
     def update(self, y_ref, y, ydot):
+        error = y_ref - y
+        u = self.kp * error - self.kd * ydot
+
+        u_sat = self._saturate(u)
+
         return u_sat
 
     def _saturate(self, u):
