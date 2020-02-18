@@ -13,6 +13,53 @@ from tools.transfer_function import transfer_function
 import parameters.aerosonde_parameters as MAV
 from parameters.simulation_parameters import ts_simulation as Ts
 
+
+def a_variables(mav):
+    # parameters
+    rho = MAV.rho
+    S = MAV.S_wing
+    b = MAV.b
+    C_p_p = MAV.C_p_p
+    Va = mav._Va
+    C_p_delta_a = MAV.C_p_delta_a
+    g = MAV.gravity
+    Vg = mav._Vg  # this is in the body frame.  Is that right? (its a magnitude so it shouldn't matter right?)
+    c = MAV.c
+    Jy = MAV.Jy
+    C_m_q = MAV.C_m_q
+    C_m_a = MAV.C_m_alpha  # is this the right variable?
+    C_m_delta_e = MAV.C_m_delta_e
+    Va_star = Va  # is this right since it is right after the trim function?
+    mass = MAV.mass
+    C_D_0 = MAV.C_D_0
+    C_D_al = MAV.C_D_alpha
+    al_star = mav._alpha
+    C_D_delta_e = MAV.C_D_delta_e
+    S_prop = MAV.S_prop
+    C_prop = MAV.C_prop
+    k_motor = MAV.k_motor
+    chi_star = mav.msg_true_state.chi
+    C_Y_B = MAV.C_Y_beta
+    C_Y_delta_r = MAV.C_Y_delta_r
+
+    a_phi_1 = -0.5 * rho * Va ** 2 * S * b * C_p_p * b / (2.0 * Va)
+    a_phi_2 = 0.5 * rho * Va ** 2 * S * b * C_p_delta_a
+
+    a_th_1 = -rho * Va ** 2 * c * S / (2.0 * Jy) * C_m_q * c / (2.0 * Va)
+    a_th_2 = -rho * Va ** 2 * c * S / (2.0 * Jy) * C_m_a
+    a_th_3 = rho * Va ** 2 * c * S / (2.0 * Jy) * C_m_delta_e
+
+    a_v_1 = rho * Va_star * S / mass * (
+                C_D_0 + C_D_al * al_star + C_D_delta_e * delta_e_star) + rho * S_prop / mass * C_prop * Va_star
+    a_v_2 = rho * S_prop / mass * C_prop * k_motor ** 2 * delta_t_star
+    a_v_3 = g * np.cos(th_star - chi_star)
+
+    a_B_1 = -rho * Va * S / (2.0 * mass) * C_Y_B
+    a_B_2 = rho * Va * S / (2.0 * mass) * C_Y_delta_r
+
+    return a_phi_1, a_phi_2, a_th_1, a_th_2, a_th_3, a_v_1, a_v_2, a_v_3, a_B_1, a_B_2
+
+
 def compute_tf_model(mav, trim_state, trim_input):
     # trim values
     u_star = trim_state[3]
@@ -51,10 +98,10 @@ def compute_tf_model(mav, trim_state, trim_input):
     C_Y_B = MAV.C_Y_beta
     C_Y_delta_r = MAV.C_Y_delta_r
 
+    [a_phi_1, a_phi_2, a_th_1, a_th_2, a_th_3, a_v_1, a_v_2, a_v_3, a_B_1, a_B_2] = a_variables(mav)
+
 
     #phi to delta_a
-    a_phi_1 = -0.5*rho*Va**2*S*b*C_p_p*b/(2.0*Va)
-    a_phi_2 = 0.5*rho*Va**2*S*b*C_p_delta_a
     num = np.array([[a_phi_2]])
     den = np.array([[1, a_phi_1, 0]])
     T_phi_delta_a = transfer_function(num, den, Ts)
@@ -65,9 +112,6 @@ def compute_tf_model(mav, trim_state, trim_input):
     T_chi_phi = transfer_function(num, den, Ts)
 
     #theta to delta_e
-    a_th_1 = -rho*Va**2*c*S/(2.0*Jy)*C_m_q*c/(2.0*Va)
-    a_th_2 = -rho*Va**2*c*S/(2.0*Jy)*C_m_a
-    a_th_3 = rho*Va**2*c*S/(2.0*Jy)*C_m_delta_e
     num = np.array([[a_th_3, 0.0]])
     den = np.array([[1, a_th_1, a_th_2]])
     T_theta_delta_e = transfer_function(num, den, Ts)
@@ -83,26 +127,22 @@ def compute_tf_model(mav, trim_state, trim_input):
     T_h_Va = transfer_function(num, den, Ts)
 
     #Va to delta_t
-    a_v_1 = rho*Va_star*S/mass*(C_D_0+C_D_al*al_star+C_D_delta_e*delta_e_star)+rho*S_prop/mass*C_prop*Va_star
-    a_v_2 = rho*S_prop/mass*C_prop*k_motor**2*delta_t_star
     num = np.array([[a_v_2]])
     den = np.array([[1, a_v_1]])
     T_Va_delta_t = transfer_function(num, den, Ts)
 
     #Va to theta
-    a_v_3 = g*np.cos(th_star-chi_star)
     num = np.array([[a_v_3]])
     den = np.array([[1, a_v_1]])
     T_Va_theta = transfer_function(num, den, Ts)
 
     #beta to delta_r
-    a_B_1 = -rho*Va*S/(2.0*mass)*C_Y_B
-    a_B_2 = rho*Va*S/(2.0*mass)*C_Y_delta_r
     num = np.array([[a_B_2]])
     den = np.array([[1, a_B_1]])
     T_beta_delta_r = transfer_function(num, den, Ts)
 
     return T_phi_delta_a, T_chi_phi, T_theta_delta_e, T_h_theta, T_h_Va, T_Va_delta_t, T_Va_theta, T_beta_delta_r
+
 
 def compute_ss_model(mav, trim_state, trim_input):
 

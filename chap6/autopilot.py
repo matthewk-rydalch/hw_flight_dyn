@@ -56,15 +56,15 @@ class autopilot:
     def update(self, cmd, state):
 
         # lateral autopilot
-        phi_c =
-        delta_a =
-        delta_r =
+        phi_c = 0.0
+        delta_a = 0.0
+        delta_r = 0.0
 
         # longitudinal autopilot
-        h_c =
-        theta_c =
-        delta_e =
-        delta_t =
+        h_c = 0.0
+        theta_c = 0.0
+        delta_e = 0.0
+        delta_t = 0.0
 
         # construct output and commanded states
         delta = np.array([[delta_e], [delta_a], [delta_r], [delta_t]])

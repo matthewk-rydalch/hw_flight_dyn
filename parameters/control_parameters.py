@@ -20,10 +20,9 @@ Wv2 = 10
 xsi_v = 0.707
 tr_v = 1
 
-
 #parameters for solving kp, kd, ki
 g = MAV.gravity
-sigma =
+# sigma =
 Va0 = 10 #m/s
 delta_a_max = 45 #degrees
 delta_r_max = 45 #degrees, I made this up
@@ -49,9 +48,9 @@ sideslip_kp = delta_r_max/e_beta_max*np.sign(TF.a_B_2)
 sideslip_ki = 1/TF.a_B_2*((TF.a_B_1+TF.a_B_2*sideslip_kp)/2*xsi_B)**2
 
 
-#----------yaw damper-------------
-yaw_damper_tau_r =
-yaw_damper_kp =
+# #----------yaw damper-------------
+# yaw_damper_tau_r =
+# yaw_damper_kp =
 
 #----------pitch loop-------------
 pitch_kp = delta_e_max/e_th_max*np.sign(TF.a_th_3)
@@ -61,7 +60,7 @@ K_theta_DC = pitch_kp*TF.a_th_3/(TF.a_th_2+pitch_kp*TF.a_th_3)
 #----------altitude loop-------------
 altitude_kp = 2*xsi_h*wn_h/(K_theta_DC*Va0)
 altitude_ki = wn_h**2/(K_theta_DC*Va0)
-altitude_zone =
+# altitude_zone =
 
 #---------airspeed hold using throttle---------------
 airspeed_throttle_kp = (2.0*xsi_v*wn_v*TF.a_v1)/TF.a_v2
