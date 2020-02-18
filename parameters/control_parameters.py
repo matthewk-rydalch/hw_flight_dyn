@@ -1,9 +1,22 @@
 import sys
 sys.path.append('..')
 import numpy as np
-import chap5.compute_models as TF
+from chap5.trim import compute_trim
+from chap5.compute_models import Compute_Models
 import parameters.aerosonde_parameters as MAV
-import chap4.mav_dynamics as mav
+from chap4.mav_dynamics import mav_dynamics
+import parameters.simulation_parameters as SIM
+
+#instantiate classes
+TF = Compute_Models()
+mav = mav_dynamics(SIM.ts_simulation)
+
+#need a_th, a_phi and such values from TF
+Va = 25.
+gamma = 0.0*np.pi/180.
+trim_state, trim_input = compute_trim(mav, Va, gamma)
+T_phi_delta_a, T_chi_phi, T_theta_delta_e, T_h_theta, T_h_Va, T_Va_delta_t, T_Va_theta, T_beta_delta_r \
+    = TF.compute_tf_model(mav, trim_state, trim_input)
 
 #Tuning parameters
 e_phi_max = 15 #degrees
@@ -23,7 +36,7 @@ tr_v = 1
 
 #parameters for solving kp, kd, ki
 g = MAV.gravity
-sigma =
+# sigma =
 Va0 = 10 #m/s
 delta_a_max = 45 #degrees
 delta_r_max = 45 #degrees, I made this up
@@ -49,9 +62,9 @@ sideslip_kp = delta_r_max/e_beta_max*np.sign(TF.a_B_2)
 sideslip_ki = 1/TF.a_B_2*((TF.a_B_1+TF.a_B_2*sideslip_kp)/2*xsi_B)**2
 
 
-#----------yaw damper-------------
-yaw_damper_tau_r =
-yaw_damper_kp =
+# #----------yaw damper-------------
+# yaw_damper_tau_r =
+# yaw_damper_kp =
 
 #----------pitch loop-------------
 pitch_kp = delta_e_max/e_th_max*np.sign(TF.a_th_3)
@@ -61,8 +74,9 @@ K_theta_DC = pitch_kp*TF.a_th_3/(TF.a_th_2+pitch_kp*TF.a_th_3)
 #----------altitude loop-------------
 altitude_kp = 2*xsi_h*wn_h/(K_theta_DC*Va0)
 altitude_ki = wn_h**2/(K_theta_DC*Va0)
-altitude_zone =
+#altitude zone is a variable that saturates the altitude zone
+# altitude_zone =
 
 #---------airspeed hold using throttle---------------
-airspeed_throttle_kp = (2.0*xsi_v*wn_v*TF.a_v1)/TF.a_v2
-airspeed_throttle_ki = wn_v**2/TF.a_v2
+airspeed_throttle_kp = (2.0*xsi_v*wn_v*TF.a_v_1)/TF.a_v_2
+airspeed_throttle_ki = wn_v**2/TF.a_v_2
