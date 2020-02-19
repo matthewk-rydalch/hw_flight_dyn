@@ -25,9 +25,9 @@ tr_chi = 1
 xsi_chi = 0.707
 e_beta_max = 15 #degrees
 xsi_B = 0.707
-e_th_max = 15 #degrees
-xsi_th = 0.707
-Wh = 10
+tr_th = 0.102
+xsi_th = 0.3
+Wh = 20
 xsi_h = 0.707
 Wv2 = 10
 xsi_v = 0.707
@@ -45,7 +45,7 @@ wn_phi = np.sqrt(abs(TF.a_phi_2)*delta_a_max/e_phi_max)
 wn_chi = 2.2/tr_chi
 Vg = mav._Vg
 delta_e_max = 45 #degrees
-wn_th = np.sqrt(TF.a_th_2+delta_e_max/e_th_max*abs(TF.a_th_3))
+wn_th = 2.2/tr_th
 wn_h = 1/Wh*wn_th
 wn_v = 2.2/tr_v
 
@@ -69,7 +69,7 @@ yaw_damper_tau_r = tau_r_yaw_damper
 yaw_damper_kp = kr_yaw_damper #This is supposed to be kr?
 
 #----------pitch loop-------------
-pitch_kp = delta_e_max/e_th_max*np.sign(TF.a_th_3)
+pitch_kp = (wn_th**2-TF.a_th_2)/TF.a_th_3
 pitch_kd = (2*xsi_th*wn_th-TF.a_th_1)/TF.a_th_3
 K_theta_DC = pitch_kp*TF.a_th_3/(TF.a_th_2+pitch_kp*TF.a_th_3)
 
@@ -80,4 +80,5 @@ altitude_zone = 10.0
 
 #---------airspeed hold using throttle---------------
 airspeed_throttle_kp = (2.0*xsi_v*wn_v*TF.a_v_1)/TF.a_v_2
-airspeed_throttle_ki = wn_v**2/TF.a_v_2
+# airspeed_throttle_ki = wn_v**2/TF.a_v_2
+airspeed_throttle_ki = 5.0
