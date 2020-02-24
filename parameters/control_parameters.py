@@ -19,8 +19,8 @@ T_phi_delta_a, T_chi_phi, T_theta_delta_e, T_h_theta, T_h_Va, T_Va_delta_t, T_Va
     = TF.compute_tf_model(mav, trim_state, trim_input)
 
 #Tuning parameters
-e_phi_max = 10 #degrees
-xsi_phi = 0.707
+e_phi_max = 8.0 #degrees
+xsi_phi = 1.0
 tr_chi = 4
 xsi_chi = 0.707
 e_beta_max = 15 #degrees

@@ -17,9 +17,6 @@ from chap6.autopilot import autopilot
 from tools.signals import signals
 from chap5.trim import compute_trim
 
-
-#TODO: Figure out why the rudder is behaving poorly
-
 # initialize the visualization
 VIDEO = False  # True==write video, False==don't write video
 mav_view = spacecraft_viewer()  # initialize the mav viewer
@@ -38,9 +35,9 @@ ctrl = autopilot(SIM.ts_simulation)
 # autopilot commands
 from message_types.msg_autopilot import msg_autopilot
 commands = msg_autopilot()
-Va_command = signals(dc_offset=25.0, amplitude=3.0, start_time=2.0, frequency = 0.01)
-h_command = signals(dc_offset=100.0, amplitude=10.0, start_time=0.0, frequency = 0.02)
-chi_command = signals(dc_offset=np.radians(0), amplitude=np.radians(45), start_time=5.0, frequency = 0.015)
+Va_command = signals(dc_offset=25.0, amplitude=0.0, start_time=2.0, frequency = 0.02)
+h_command = signals(dc_offset=100.0, amplitude=15.0, start_time=0.0, frequency = 0.02)
+chi_command = signals(dc_offset=np.radians(0), amplitude=np.radians(0), start_time=5.0, frequency = 0.01)
 
 # initialize the simulation time
 sim_time = SIM.start_time
@@ -61,8 +58,8 @@ while sim_time < SIM.end_time:
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector
     current_wind = np.zeros((6, 1)) #get rid of this
-    input = np.array([[delta.item(0), delta.item(1), trim_input.item(2), delta.item(3)]]).T #chi is off for anything but trim
-    mav.update_state(input, current_wind)  # propagate the MAV dynamics
+    input = np.array([[delta.item(0), delta.item(1), delta.item(2), delta.item(3)]]).T #chi is off for anything but trim
+    mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------
     mav_view.update(mav.msg_true_state)  # plot body of MAV
