@@ -57,7 +57,8 @@ class autopilot:
     def update(self, cmd, state):
 
         # lateral autopilot
-        phi_c = self.course_from_roll.update(cmd.course_command, state.chi)
+        chi_c = wrap(cmd.course_command, 0.0)
+        phi_c = self.course_from_roll.update(chi_c, state.chi)
         delta_a = self.roll_from_aileron.update(phi_c, state.phi, state.p)
         delta_r = self.yaw_damper.update(state.r)
 
@@ -74,7 +75,7 @@ class autopilot:
         self.commanded_state.Va = cmd.airspeed_command
         self.commanded_state.phi = phi_c
         self.commanded_state.theta = theta_c
-        self.commanded_state.chi = cmd.course_command
+        self.commanded_state.chi = chi_c
         return delta, self.commanded_state
 
     def saturate(self, input, low_limit, up_limit):

@@ -316,10 +316,10 @@ class mav_dynamics:
                        [MAV.mass*MAV.gravity*np.cos(th)*np.sin(phi)],
                        [MAV.mass*MAV.gravity*np.cos(th)*np.cos(phi)]])
 
-        if Va == 0.0:
-            fa = np.array([[0.0],[0.0],[0.0]])
-        else:
-            fa = 0.5*MAV.rho*Va**2*MAV.S_wing*np.array([[Cx_a+Cxq_a*MAV.c/(2.0*Va)*q+Cx_de_a*delta_e],
+        # if Va == 0.0:
+        #     fa = np.array([[0.0],[0.0],[0.0]])
+        # else:
+        fa = 0.5*MAV.rho*Va**2*MAV.S_wing*np.array([[Cx_a+Cxq_a*MAV.c/(2.0*Va)*q+Cx_de_a*delta_e],
                                                         [C_Y_0+C_Y_beta*beta+C_Y_p*MAV.b/(2.0*Va)*p+C_Y_r*MAV.b/(2.0*Va)*r+C_Y_delta_a*delta_a+C_Y_delta_r*delta_r],
                                                         [Cz_a+Czq_a*MAV.c/(2.0*Va)*q+Cz_de_a*delta_e]])
 
@@ -340,6 +340,7 @@ class mav_dynamics:
 
         fx = fg[0][0]+fa[0][0]+fp[0][0]
         fy = fg[1][0]+fa[1][0]+fp[1][0]
+        # fy = fg[1][0] + fa[1][0] + fp[1][0]
         fz = fg[2][0]+fa[2][0]+fp[2][0]
         Mx = Ma[0][0]+Mt[0][0]
         My = Ma[1][0]+Mt[1][0]
