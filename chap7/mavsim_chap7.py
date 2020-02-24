@@ -9,7 +9,7 @@ sys.path.append('..')
 import numpy as np
 import parameters.simulation_parameters as SIM
 
-from chap2.mav_viewer import mav_viewer
+from chap2.spacecraft_viewer import spacecraft_viewer
 from chap3.data_viewer import data_viewer
 from chap4.wind_simulation import wind_simulation
 from chap6.autopilot import autopilot
@@ -18,7 +18,7 @@ from tools.signals import signals
 
 # initialize the visualization
 VIDEO = False  # True==write video, False==don't write video
-mav_view = mav_viewer()  # initialize the mav viewer
+mav_view = spacecraft_viewer()  # initialize the mav viewer
 data_view = data_viewer()  # initialize view of data plots
 if VIDEO == True:
     from chap2.video_writer import video_writer
@@ -51,17 +51,17 @@ while sim_time < SIM.end_time:
     commands.altitude_command = h_command.square(sim_time)
 
     #-------controller-------------
-    estimated_state = mav.true_state  # uses true states in the control
+    estimated_state = mav.msg_true_state  # uses true states in the control
     delta, commanded_state = ctrl.update(commands, estimated_state)
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
-    mav.update_sensors()  # update the sensors
+    # mav.update_sensors()  # update the sensors
 
     #-------update viewer-------------
-    mav_view.update(mav.true_state)  # plot body of MAV
-    data_view.update(mav.true_state, # true states
+    mav_view.update(mav.msg_true_state)  # plot body of MAV
+    data_view.update(mav.msg_true_state, # true states
                      estimated_state, # estimated states
                      commanded_state, # commanded states
                      SIM.ts_simulation)
