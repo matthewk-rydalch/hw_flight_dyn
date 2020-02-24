@@ -33,7 +33,7 @@ Wv2 = 10
 xsi_v = 0.707
 tr_v = 1
 tau_r_yaw_damper = 0.5 #0.5 is from the root locus in the supplimental material
-kr_yaw_damper = 0.3 #I completely guessed on this
+kr_yaw_damper = 5.0#0.3 #I completely guessed on this
 
 #parameters for solving kp, kd, ki
 g = MAV.gravity

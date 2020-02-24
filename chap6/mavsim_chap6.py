@@ -61,8 +61,8 @@ while sim_time < SIM.end_time:
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector
     current_wind = np.zeros((6, 1)) #get rid of this
-    # input = np.array([[delta.item(0), delta.item(1), delta.item(2), delta.item(3)]]).T #can remove this
-    mav.update_state(delta, current_wind)  # propagate the MAV dynamics
+    input = np.array([[delta.item(0), delta.item(1), trim_input.item(2), delta.item(3)]]).T #chi is off for anything but trim
+    mav.update_state(input, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------
     mav_view.update(mav.msg_true_state)  # plot body of MAV

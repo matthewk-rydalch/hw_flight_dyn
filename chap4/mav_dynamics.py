@@ -377,7 +377,7 @@ class mav_dynamics:
         Vg_i = R.T@Vg_b
         self.msg_true_state.Vg = np.linalg.norm(Vg_b)
         self.msg_true_state.gamma = np.arctan2(-Vg_i[2], np.sqrt(Vg_i[0]**2+Vg_i[1]**2))
-        self.msg_true_state.chi = np.arctan2(Vg_i[1], Vg_i[0])[0]
+        self.msg_true_state.chi = -np.arctan2(Vg_i[1], Vg_i[0])[0]
         self.msg_true_state.p = self._state.item(10)
         self.msg_true_state.q = self._state.item(11)
         self.msg_true_state.r = self._state.item(12)
