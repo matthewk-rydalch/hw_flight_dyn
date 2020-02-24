@@ -18,7 +18,7 @@ from tools.signals import signals
 from chap5.trim import compute_trim
 
 
-#TODO: To pick up from Tuesday, figure out why chi is behaving so strangly.  I have made some adjustments to fix it in mav_dynamics, but that didn't work.
+#TODO: Figure out why the rudder is behaving poorly
 
 # initialize the visualization
 VIDEO = False  # True==write video, False==don't write video

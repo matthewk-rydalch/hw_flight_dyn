@@ -70,7 +70,7 @@ class autopilot:
         # construct output and commanded states
         delta = np.array([[delta_a], [delta_e], [delta_r], [delta_t]])
 
-        self.commanded_state.h = h_c
+        self.commanded_state.h = cmd.altitude_command
         self.commanded_state.Va = cmd.airspeed_command
         self.commanded_state.phi = phi_c
         self.commanded_state.theta = theta_c

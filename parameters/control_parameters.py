@@ -19,21 +19,21 @@ T_phi_delta_a, T_chi_phi, T_theta_delta_e, T_h_theta, T_h_Va, T_Va_delta_t, T_Va
     = TF.compute_tf_model(mav, trim_state, trim_input)
 
 #Tuning parameters
-e_phi_max = 15 #degrees
+e_phi_max = 10 #degrees
 xsi_phi = 0.707
-tr_chi = 1
+tr_chi = 4
 xsi_chi = 0.707
 e_beta_max = 15 #degrees
 xsi_B = 0.707
-tr_th = 0.102
-xsi_th = 0.3
-Wh = 20
-xsi_h = 0.707
+tr_th = 0.13
+xsi_th = 0.707
+Wh = 15
+xsi_h = 0.3
 Wv2 = 10
 xsi_v = 0.707
 tr_v = 1
 tau_r_yaw_damper = 0.5 #0.5 is from the root locus in the supplimental material
-kr_yaw_damper = 5.0#0.3 #I completely guessed on this
+kr_yaw_damper = 0.3 #I completely guessed on this
 
 #parameters for solving kp, kd, ki
 g = MAV.gravity
