@@ -191,13 +191,13 @@ class mav_dynamics:
         self._wind = np.array([[wind_constant[0][0]+wind[3][0]],
                               [wind_constant[1][0]+wind[4][0]],
                               [wind_constant[2][0]+wind[5][0]]])
-        Va_b = np.array([[self._state[3][0]-self._wind[0][0]],
+        self.Va_b = np.array([[self._state[3][0]-self._wind[0][0]],
                          [self._state[4][0]-self._wind[1][0]],
                          [self._state[5][0]-self._wind[2][0]]])
 
-        self._Va = np.linalg.norm(Va_b)
+        self._Va = np.linalg.norm(self.Va_b)
 
-        Vg_b = Va_b+self._wind
+        Vg_b = self.Va_b+self._wind
         self._Vg = np.linalg.norm(Vg_b)
 
         if self._Va == 0.0:
@@ -205,10 +205,10 @@ class mav_dynamics:
             self._beta = 0.0
         else:
             # compute angle of attack
-            self._alpha = np.arctan2(Va_b[2], Va_b[0])[0]
+            self._alpha = np.arctan2(self.Va_b[2], self.Va_b[0])[0]
 
             # compute sideslip angle
-            self._beta = np.arcsin(Va_b[1][0]/self._Va)
+            self._beta = np.arcsin(self.Va_b[1][0]/self._Va)
 
     def _forces_moments(self, delta):
         """
@@ -316,10 +316,10 @@ class mav_dynamics:
                        [MAV.mass*MAV.gravity*np.cos(th)*np.sin(phi)],
                        [MAV.mass*MAV.gravity*np.cos(th)*np.cos(phi)]])
 
-        if Va == 0.0:
-            fa = np.array([[0.0],[0.0],[0.0]])
-        else:
-            fa = 0.5*MAV.rho*Va**2*MAV.S_wing*np.array([[Cx_a+Cxq_a*MAV.c/(2.0*Va)*q+Cx_de_a*delta_e],
+        # if Va == 0.0:
+        #     fa = np.array([[0.0],[0.0],[0.0]])
+        # else:
+        fa = 0.5*MAV.rho*Va**2*MAV.S_wing*np.array([[Cx_a+Cxq_a*MAV.c/(2.0*Va)*q+Cx_de_a*delta_e],
                                                         [C_Y_0+C_Y_beta*beta+C_Y_p*MAV.b/(2.0*Va)*p+C_Y_r*MAV.b/(2.0*Va)*r+C_Y_delta_a*delta_a+C_Y_delta_r*delta_r],
                                                         [Cz_a+Czq_a*MAV.c/(2.0*Va)*q+Cz_de_a*delta_e]])
 
@@ -340,6 +340,7 @@ class mav_dynamics:
 
         fx = fg[0][0]+fa[0][0]+fp[0][0]
         fy = fg[1][0]+fa[1][0]+fp[1][0]
+        # fy = fg[1][0] + fa[1][0] + fp[1][0]
         fz = fg[2][0]+fa[2][0]+fp[2][0]
         Mx = Ma[0][0]+Mt[0][0]
         My = Ma[1][0]+Mt[1][0]
@@ -371,17 +372,13 @@ class mav_dynamics:
         self.msg_true_state.phi = phi
         self.msg_true_state.theta = theta
         self.msg_true_state.psi = psi
-        # Vg_b = self.Va_b+self._wind
-        # self.msg_true_state.Vg = np.linalg.norm(Vg_b)
-        # self.msg_true_state.gamma = np.arctan2(Vg_b[2], Vg_b[0])
-        # self.msg_true_state.chi = np.arctan2(Vg_b[1], Vg_b[0])
 
-        Vg_b = self.Va_b+self._wind
         R = self.Euler2Rotation(phi, theta, psi)
+        Vg_b = self.Va_b+self._wind
         Vg_i = R.T@Vg_b
         self.msg_true_state.Vg = np.linalg.norm(Vg_b)
         self.msg_true_state.gamma = np.arctan2(-Vg_i[2], np.sqrt(Vg_i[0]**2+Vg_i[1]**2))
-        self.msg_true_state.chi = np.arctan2(Vg_i[1], Vg_i[0])
+        self.msg_true_state.chi = -np.arctan2(Vg_i[1], Vg_i[0])[0]
         self.msg_true_state.p = self._state.item(10)
         self.msg_true_state.q = self._state.item(11)
         self.msg_true_state.r = self._state.item(12)
