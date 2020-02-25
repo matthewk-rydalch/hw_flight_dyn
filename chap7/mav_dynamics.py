@@ -11,6 +11,7 @@ mavsim_python
 import sys
 sys.path.append('..')
 import numpy as np
+import math
 
 # load message types
 from message_types.msg_state import msg_state
@@ -97,30 +98,56 @@ class mav_dynamics:
         # update the message class for the true state
         self._update_msg_true_state()
 
-    #TODO impliment this function
+    def update_sensors(self):
+        "Return value of sensors on MAV: gyros, accels, static_pressure, dynamic_pressure, GPS"
 
-    # def update_sensors(self):
-    #     "Return value of sensors on MAV: gyros, accels, static_pressure, dynamic_pressure, GPS"
-    #     self.sensors.gyro_x =
-    #     self.sensors.gyro_y =
-    #     self.sensors.gyro_z =
-    #     self.sensors.accel_x =
-    #     self.sensors.accel_y =
-    #     self.sensors.accel_z =
-    #     self.sensors.static_pressure =
-    #     self.sensors.diff_pressure =
-    #     if self._t_gps >= SENSOR.ts_gps:
-    #         self._gps_eta_n =
-    #         self._gps_eta_e =
-    #         self._gps_eta_h =
-    #         self.sensors.gps_n =
-    #         self.sensors.gps_e =
-    #         self.sensors.gps_h =
-    #         self.sensors.gps_Vg =
-    #         self.sensors.gps_course =
-    #         self._t_gps = 0.
-    #     else:
-    #         self._t_gps += self._ts_simulation
+        Fx = self._forces[0]
+        Fy = self._forces[1]
+        Fz = self._forces[2]
+        m = MAV.mass
+        g = MAV.gravity
+        e = self._state[6:10]
+        phi, th, psi = Quaternion2Euler(e)
+        p, q, r = self._state[10:13]
+        rho = MAV.rho
+        h_AGL = -self._state[2]
+        Va = self._Va
+
+        n_gyro_x = np.random.normal(0.0, SENSOR.gyro_sigma)
+        n_gyro_y = np.random.normal(0.0, SENSOR.gyro_sigma)
+        n_gyro_z = np.random.normal(0.0, SENSOR.gyro_sigma)
+        n_accel_x = np.random.normal(0.0, SENSOR.accel_sigma)
+        n_accel_y = np.random.normal(0.0, SENSOR.accel_sigma)
+        n_accel_z = np.random.normal(0.0, SENSOR.accel_sigma)
+        n_abs_pres = np.random.normal(0.0, SENSOR.static_pres_sigma)
+        n_dif_pres = np.random.normal(0.0, SENSOR.diff_pres_sigma)
+
+        B_gyro_x = SENSOR.gyro_x_bias
+        B_gyro_y = SENSOR.gyro_y_bias
+        B_gyro_z = SENSOR.gyro_z_bias
+        B_abs_pres = SENSOR.static_pres_beta
+        B_dif_pres = SENSOR.diff_pres_beta
+
+        self.sensors.gyro_x = p + B_gyro_x + n_gyro_x
+        self.sensors.gyro_y = q + B_gyro_y + n_gyro_y
+        self.sensors.gyro_z = r + B_gyro_z + n_gyro_z
+        self.sensors.accel_x = Fx/m + g*np.sin(th) + n_accel_x
+        self.sensors.accel_y = Fy/m - g*np.cos(th)*np.sin(phi) + n_accel_y
+        self.sensors.accel_z = Fz/m- g*np.cos(th)*np.cos(phi) + n_accel_z
+        self.sensors.static_pressure = rho*g*h_AGL + B_abs_pres + n_abs_pres
+        self.sensors.diff_pressure = rho*Va**2/2.0 + B_dif_pres + n_dif_pres
+        if self._t_gps >= SENSOR.ts_gps:
+            self._gps_eta_n = math.exp(-K_gps*Ts)*self._gps_eta_n 
+            self._gps_eta_e =
+            self._gps_eta_h =
+            self.sensors.gps_n =
+            self.sensors.gps_e =
+            self.sensors.gps_h =
+            self.sensors.gps_Vg =
+            self.sensors.gps_course =
+            self._t_gps = 0.
+        else:
+            self._t_gps += self._ts_simulation
 
     ###################################
     # private functions
