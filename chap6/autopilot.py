@@ -26,12 +26,6 @@ class autopilot:
                         ki=AP.course_ki,
                         Ts=ts_control,
                         limit=np.radians(30))
-        #We are using yaw damper instead
-        # self.sideslip_from_rudder = pi_control(
-        #                 kp=AP.sideslip_kp,
-        #                 ki=AP.sideslip_ki,
-        #                 Ts=ts_control,
-        #                 limit=np.radians(45))
         self.yaw_damper = transfer_function(
                         num=np.array([[AP.yaw_damper_kp, 0]]),
                         den=np.array([[1, 1/AP.yaw_damper_tau_r]]),

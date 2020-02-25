@@ -324,13 +324,13 @@ class mav_dynamics:
             Ma = np.array([[0.0], [0.0], [0.0]])
         else:
             Ma = 0.5 * MAV.rho * Va ** 2 * MAV.S_wing * np.array([[MAV.b * (
-                                                                    C_ell_0 + C_ell_beta * beta + C_ell_p * MAV.b / (2 * Va) * p + C_ell_r * MAV.b / (
-                                                                        2.0 * Va) * r + C_ell_delta_a * delta_a + C_ell_delta_r * delta_r)],
-                                                                  [MAV.c * (C_m_0 + C_m_alpha * al + C_m_q * MAV.c / (
-                                                                              2.0 * Va) * q + C_m_delta_e * delta_e)],
-                                                                  [MAV.b * (C_n_0 + C_n_beta * beta + C_n_p * MAV.b / (
-                                                                              2.0 * Va) * p + C_n_r * MAV.b / (
-                                                                                        2.0 * Va) * r + C_n_delta_a * delta_a + C_n_delta_r * delta_r)]])
+                C_ell_0 + C_ell_beta * beta + C_ell_p * MAV.b / (2 * Va) * p + C_ell_r * MAV.b / (
+                    2.0 * Va) * r + C_ell_delta_a * delta_a + C_ell_delta_r * delta_r)],
+              [MAV.c * (C_m_0 + C_m_alpha * al + C_m_q * MAV.c / (
+                          2.0 * Va) * q + C_m_delta_e * delta_e)],
+              [MAV.b * (C_n_0 + C_n_beta * beta + C_n_p * MAV.b / (
+                          2.0 * Va) * p + C_n_r * MAV.b / (
+                                    2.0 * Va) * r + C_n_delta_a * delta_a + C_n_delta_r * delta_r)]])
 
         Mt = np.array([[Qp],
                        [0.0],
