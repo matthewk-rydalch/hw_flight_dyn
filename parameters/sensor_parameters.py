@@ -26,7 +26,7 @@ mag_sigma = np.radians(0.03)
 #-------- GPS --------
 ts_gps = 1.0
 # Is this gps beta right???
-gps_beta = 1. / 1100.  # 1 / s
+K_gps = 1. / 1100.  # 1 / s
 gps_n_sigma = 0.21
 gps_e_sigma = 0.21
 gps_h_sigma = 0.40

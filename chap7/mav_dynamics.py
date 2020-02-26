@@ -48,6 +48,7 @@ class mav_dynamics:
         self._Va = MAV.Va0
         self.Va_b = np.array([[0.], [0.], [0.]])
         self._Vg = MAV.Va0
+        self.Vg_i = np.array([[MAV.u0, MAV.v0, MAV.w0]]).T
         self._alpha = 0
         self._beta = 0
         # initialize true_state message
@@ -112,6 +113,13 @@ class mav_dynamics:
         rho = MAV.rho
         h_AGL = -self._state[2]
         Va = self._Va
+        K_gps = SENSOR.K_gps
+        Ts = SENSOR.ts_gps
+        pn = self._state[0]
+        pe = self._state[1]
+        ph = -self._state[2]
+        Vg_n = self.Vg_i[0]
+        Vg_e = self.Vg_i[1]
 
         n_gyro_x = np.random.normal(0.0, SENSOR.gyro_sigma)
         n_gyro_y = np.random.normal(0.0, SENSOR.gyro_sigma)
@@ -121,6 +129,11 @@ class mav_dynamics:
         n_accel_z = np.random.normal(0.0, SENSOR.accel_sigma)
         n_abs_pres = np.random.normal(0.0, SENSOR.static_pres_sigma)
         n_dif_pres = np.random.normal(0.0, SENSOR.diff_pres_sigma)
+        n_gps_n = np.random.normal(0.0, SENSOR.gps_n_sigma)
+        n_gps_e = np.random.normal(0.0, SENSOR.gps_e_sigma)
+        n_gps_h = np.random.normal(0.0, SENSOR.gps_h_sigma)
+        n_gps_v = np.random.normal(0.0, SENSOR.gps_Vg_sigma)
+        n_gps_chi = np.random.normal(0.0, SENSOR.gps_course_sigma)
 
         B_gyro_x = SENSOR.gyro_x_bias
         B_gyro_y = SENSOR.gyro_y_bias
@@ -136,15 +149,15 @@ class mav_dynamics:
         self.sensors.accel_z = Fz/m- g*np.cos(th)*np.cos(phi) + n_accel_z
         self.sensors.static_pressure = rho*g*h_AGL + B_abs_pres + n_abs_pres
         self.sensors.diff_pressure = rho*Va**2/2.0 + B_dif_pres + n_dif_pres
-        if self._t_gps >= SENSOR.ts_gps:
-            self._gps_eta_n = math.exp(-K_gps(beta)*Ts)*self._gps_eta_n
-            self._gps_eta_e =
-            self._gps_eta_h =
-            self.sensors.gps_n =
-            self.sensors.gps_e =
-            self.sensors.gps_h =
-            self.sensors.gps_Vg =
-            self.sensors.gps_course =
+        if self._t_gps >= Ts:
+            self._gps_eta_n = math.exp(-K_gps*self._t_gps)*self._gps_eta_n+n_gps_n
+            self._gps_eta_e = math.exp(-K_gps*self._t_gps)*self._gps_eta_n+n_gps_e
+            self._gps_eta_h = math.exp(-K_gps*self._t_gps)*self._gps_eta_n+n_gps_h
+            self.sensors.gps_n = pn + self._gps_eta_n
+            self.sensors.gps_e = pe + self._gps_eta_e
+            self.sensors.gps_h = ph + self._gps_eta_h
+            self.sensors.gps_Vg = np.sqrt(Vg_n**2+Vg_e**2)+n_gps_v
+            self.sensors.gps_course = math.atan2(Vg_e, Vg_n)+n_gps_chi
             self._t_gps = 0.
         else:
             self._t_gps += self._ts_simulation
@@ -433,10 +446,10 @@ class mav_dynamics:
 
         R = Euler2Rotation(phi, theta, psi)
         Vg_b = self.Va_b + self._wind
-        Vg_i = R.T @ Vg_b
+        self.Vg_i = R.T @ Vg_b
         self.msg_true_state.Vg = np.linalg.norm(Vg_b)
-        self.msg_true_state.gamma = np.arctan2(-Vg_i[2], np.sqrt(Vg_i[0] ** 2 + Vg_i[1] ** 2))
-        self.msg_true_state.chi = -np.arctan2(Vg_i[1], Vg_i[0])[0]
+        self.msg_true_state.gamma = np.arctan2(-self.Vg_i[2], np.sqrt(self.Vg_i[0] ** 2 + self.Vg_i[1] ** 2))
+        self.msg_true_state.chi = -np.arctan2(self.Vg_i[1], self.Vg_i[0])[0]
         self.msg_true_state.p = self._state.item(10)
         self.msg_true_state.q = self._state.item(11)
         self.msg_true_state.r = self._state.item(12)
