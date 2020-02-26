@@ -137,7 +137,7 @@ class mav_dynamics:
         self.sensors.static_pressure = rho*g*h_AGL + B_abs_pres + n_abs_pres
         self.sensors.diff_pressure = rho*Va**2/2.0 + B_dif_pres + n_dif_pres
         if self._t_gps >= SENSOR.ts_gps:
-            self._gps_eta_n = math.exp(-K_gps*Ts)*self._gps_eta_n 
+            self._gps_eta_n = math.exp(-K_gps(beta)*Ts)*self._gps_eta_n
             self._gps_eta_e =
             self._gps_eta_h =
             self.sensors.gps_n =
