@@ -55,7 +55,7 @@ class mav_dynamics:
         self.msg_true_state = msg_state()
 
         # initialize the sensors message
-        self.sensors = msg_sensors()
+        self._sensors = msg_sensors()
         # random walk parameters for GPS
         self._gps_eta_n = 0.
         self._gps_eta_e = 0.
@@ -141,23 +141,23 @@ class mav_dynamics:
         B_abs_pres = SENSOR.static_pres_beta
         B_dif_pres = SENSOR.diff_pres_beta
 
-        self.sensors.gyro_x = p + B_gyro_x + n_gyro_x
-        self.sensors.gyro_y = q + B_gyro_y + n_gyro_y
-        self.sensors.gyro_z = r + B_gyro_z + n_gyro_z
-        self.sensors.accel_x = Fx/m + g*np.sin(th) + n_accel_x
-        self.sensors.accel_y = Fy/m - g*np.cos(th)*np.sin(phi) + n_accel_y
-        self.sensors.accel_z = Fz/m- g*np.cos(th)*np.cos(phi) + n_accel_z
-        self.sensors.static_pressure = rho*g*h_AGL + B_abs_pres + n_abs_pres
-        self.sensors.diff_pressure = rho*Va**2/2.0 + B_dif_pres + n_dif_pres
+        self._sensors.gyro_x = (p + B_gyro_x + n_gyro_x)[0]
+        self._sensors.gyro_y = (q + B_gyro_y + n_gyro_y)[0]
+        self._sensors.gyro_z = (r + B_gyro_z + n_gyro_z)[0]
+        self._sensors.accel_x = (Fx/m + g*np.sin(th) + n_accel_x)[0]
+        self._sensors.accel_y = (Fy/m - g*np.cos(th)*np.sin(phi) + n_accel_y)[0]
+        self._sensors.accel_z = (Fz/m- g*np.cos(th)*np.cos(phi) + n_accel_z)[0]
+        self._sensors.static_pressure = (rho*g*h_AGL + B_abs_pres + n_abs_pres)[0]
+        self._sensors.diff_pressure = rho*Va**2/2.0 + B_dif_pres + n_dif_pres
         if self._t_gps >= Ts:
             self._gps_eta_n = math.exp(-K_gps*self._t_gps)*self._gps_eta_n+n_gps_n
             self._gps_eta_e = math.exp(-K_gps*self._t_gps)*self._gps_eta_n+n_gps_e
             self._gps_eta_h = math.exp(-K_gps*self._t_gps)*self._gps_eta_n+n_gps_h
-            self.sensors.gps_n = pn + self._gps_eta_n
-            self.sensors.gps_e = pe + self._gps_eta_e
-            self.sensors.gps_h = ph + self._gps_eta_h
-            self.sensors.gps_Vg = np.sqrt(Vg_n**2+Vg_e**2)+n_gps_v
-            self.sensors.gps_course = math.atan2(Vg_e, Vg_n)+n_gps_chi
+            self._sensors.gps_n = (pn + self._gps_eta_n)[0]
+            self._sensors.gps_e = (pe + self._gps_eta_e)[0]
+            self._sensors.gps_h = (ph + self._gps_eta_h)[0]
+            self._sensors.gps_Vg = (np.sqrt(Vg_n**2+Vg_e**2)+n_gps_v)[0]
+            self._sensors.gps_course = math.atan2(Vg_e, Vg_n)+n_gps_chi
             self._t_gps = 0.
         else:
             self._t_gps += self._ts_simulation
