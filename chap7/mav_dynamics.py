@@ -157,7 +157,7 @@ class mav_dynamics:
             self._sensors.gps_e = (pe + self._gps_eta_e)[0]
             self._sensors.gps_h = (ph + self._gps_eta_h)[0]
             self._sensors.gps_Vg = (np.sqrt(Vg_n**2+Vg_e**2)+n_gps_v)[0]
-            self._sensors.gps_course = math.atan2(Vg_e, Vg_n)+n_gps_chi
+            self._sensors.gps_course = -math.atan2(Vg_e, Vg_n)+n_gps_chi
             self._t_gps = 0.
         else:
             self._t_gps += self._ts_simulation
