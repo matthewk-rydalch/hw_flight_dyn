@@ -26,12 +26,6 @@ class autopilot:
                         ki=AP.course_ki,
                         Ts=ts_control,
                         limit=np.radians(30))
-        #We are using yaw damper instead
-        # self.sideslip_from_rudder = pi_control(
-        #                 kp=AP.sideslip_kp,
-        #                 ki=AP.sideslip_ki,
-        #                 Ts=ts_control,
-        #                 limit=np.radians(45))
         self.yaw_damper = transfer_function(
                         num=np.array([[AP.yaw_damper_kp, 0]]),
                         den=np.array([[1, 1/AP.yaw_damper_tau_r]]),
@@ -57,7 +51,7 @@ class autopilot:
     def update(self, cmd, state):
 
         # lateral autopilot
-        chi_c = wrap(cmd.course_command, 0.0)
+        chi_c = wrap(cmd.course_command, state.chi)
         phi_c = self.course_from_roll.update(chi_c, state.chi)
         delta_a = self.roll_from_aileron.update(phi_c, state.phi, state.p)
         delta_r = self.yaw_damper.update(state.r)

@@ -13,9 +13,11 @@ gyro_sigma = 0.13*np.pi/180.  # standard deviation of gyros in rad/sec
 
 #-------- Pressure Sensor(Altitude) --------
 static_pres_sigma = 0.01*1000  # standard deviation of static pressure sensors in Pascals
+static_pres_beta = 0.0 # I added this
 
 #-------- Pressure Sensor (Airspeed) --------
 diff_pres_sigma = 0.002*1000  # standard deviation of diff pressure sensor in Pascals
+diff_pres_beta = 0.0 # I added this
 
 #-------- Magnetometer --------
 mag_beta = np.radians(1.0)
@@ -23,7 +25,8 @@ mag_sigma = np.radians(0.03)
 
 #-------- GPS --------
 ts_gps = 1.0
-gps_beta = 1. / 1100.  # 1 / s
+# Is this gps beta right???
+K_gps = 1. / 1100.  # 1 / s
 gps_n_sigma = 0.21
 gps_e_sigma = 0.21
 gps_h_sigma = 0.40

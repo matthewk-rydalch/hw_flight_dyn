@@ -52,5 +52,4 @@ class wind_simulation:
         gust = np.array([[self.u_w.update(np.random.randn())],
                          [self.v_w.update(np.random.randn())],
                          [self.w_w.update(np.random.randn())]])
-        #gust = np.array([[0.],[0.],[0.]])
         return np.concatenate(( self._steady_state, gust ))
