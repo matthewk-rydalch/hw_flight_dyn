@@ -74,12 +74,13 @@ class alpha_filter:
 class ekf_attitude:
     # implement continous-discrete EKF to estimate roll and pitch angles
     def __init__(self, initial_state):
-        self.Q =
-        self.Q_gyro =
-        self.R_accel =
+        Q_tune = 1 #TODO tune this
+        self.Q = Q_tune*np.identity(2)
+        self.Q_gyro = SENSOR.gyro_sigma**2*np.identity(3)
+        self.R_accel = SENSOR.accel_sigma**2*np.identity(3)
         self.N = 5  #TODO get the right number of prediction step per sample
         self.xhat =  np.array([[initial_state.phi, initial_state.theta]]).T# initial state: phi, theta
-        self.P =
+        self.P = np.identity(2)
         self.Ts = SIM.ts_control/self.N
 
     def update(self, state, measurement):
@@ -119,10 +120,11 @@ class ekf_attitude:
             # update P with continuous time model
             self.P = self.P + self.Ts * (A @ self.P + self.P @ A.T + self.Q + G @ self.Q_gyro @ G.T)
             ## convert to discrete time models
-            A_d = 
-            G_d =
+            A_d = np.identity(2) + A*Tp + A*A*Tp**2
+            #TODO figure out how to use G_d
+            # G_d =
             # update P with discrete time model
-            self.P =
+            self.P = A_d@self.P@A_d.T+Tp**2@self.Q
 
     def measurement_update(self, state, measurement):
         # measurement updates
