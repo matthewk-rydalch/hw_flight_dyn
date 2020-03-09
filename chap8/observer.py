@@ -10,6 +10,7 @@ sys.path.append('..')
 import parameters.control_parameters as CTRL
 import parameters.simulation_parameters as SIM
 import parameters.sensor_parameters as SENSOR
+import parameters.aerosonde_parameters as MAV
 from tools.rotations import Euler2Rotation
 from tools.wrap import wrap
 
@@ -30,20 +31,20 @@ class observer:
         self.lpf_static = alpha_filter(alpha=0.9)
         self.lpf_diff = alpha_filter(alpha=0.5)
         # ekf for phi and theta
-        self.attitude_ekf = ekf_attitude()
+        self.attitude_ekf = ekf_attitude(self.estimated_state)
         # ekf for pn, pe, Vg, chi, wn, we, psi
         self.position_ekf = ekf_position()
 
     def update(self, measurements):
 
         # estimates for p, q, r are low pass filter of gyro minus bias estimate
-        self.estimated_state.p =
-        self.estimated_state.q =
-        self.estimated_state.r =
+        self.estimated_state.p = self.lpf_gyro_x.update(measurements.gyro_x) - SENSOR.gyro_x_bias
+        self.estimated_state.q = self.lpf_gyro_y.update(measurements.gyro_y) - SENSOR.gyro_y_bias
+        self.estimated_state.r = self.lpf_gyro_z.update(measurements.gyro_z) - SENSOR.gyro_z_bias
 
         # invert sensor model to get altitude and airspeed
-        self.estimated_state.h =
-        self.estimated_state.Va =
+        self.estimated_state.h = self.lpf_static.update(measurements.static_pressure)/(MAV.rho*MAV.gravity)
+        self.estimated_state.Va = np.sqrt(1/MAV.rho*self.lpf_static.update(measurements.diff_pressure))
 
         # estimate phi and theta with simple ekf
         self.attitude_ekf.update(self.estimated_state, measurements)
@@ -67,17 +68,17 @@ class alpha_filter:
         self.y = y0  # initial condition
 
     def update(self, u):
-        self.y =
+        self.y = self.alpha*self.y+(1-self.alpha)*u
         return self.y
 
 class ekf_attitude:
     # implement continous-discrete EKF to estimate roll and pitch angles
-    def __init__(self):
+    def __init__(self, initial_state):
         self.Q =
         self.Q_gyro =
         self.R_accel =
-        self.N =   # number of prediction step per sample
-        self.xhat =  # initial state: phi, theta
+        self.N = 5  #TODO get the right number of prediction step per sample
+        self.xhat =  np.array([[initial_state.phi, initial_state.theta]]).T# initial state: phi, theta
         self.P =
         self.Ts = SIM.ts_control/self.N
 
@@ -88,8 +89,15 @@ class ekf_attitude:
         state.theta = self.xhat.item(1)
 
     def f(self, x, state):
-        # system dynamics for propagation model: xdot = f(x, u)
-        _f =
+        # system dynamics for propagation model: xdot = f(x, u), but this one doesn't actually use u
+        p = state.p
+        q = state.q
+        r = state.r
+        phi = x[0][0]
+        theta = x[1][0]
+
+        _f = np.array([[p+q*np.sin(phi)*np.tan(theta)+r*np.cos(phi)*np.tan(theta), \
+                        q*np.cos(phi)-r*np.sin(phi)]])
         return _f
 
     def h(self, x, state):
@@ -100,16 +108,18 @@ class ekf_attitude:
     def propagate_model(self, state):
         # model propagation
         for i in range(0, self.N):
-             # propagate model
-            self.xhat =
+            # propagate model
+            Tp = self.Ts
+            self.xhat = self.xhat +Tp*self.f(self.xhat, state) #This one doesn't actually use u
             # compute Jacobian
             A = jacobian(self.f, self.xhat, state)
             # compute G matrix for gyro noise
-            G =
+            G = np.array([[1.0, np.sin(state.phi)*np.tan(state.theta), np.cos(state.phi)*np.tan(state.theta), 0],\
+                           0.0, np.cos(state.phi), -np.sin(state.phi), 0.0])
             # update P with continuous time model
-            # self.P = self.P + self.Ts * (A @ self.P + self.P @ A.T + self.Q + G @ self.Q_gyro @ G.T)
-            # convert to discrete time models
-            A_d =
+            self.P = self.P + self.Ts * (A @ self.P + self.P @ A.T + self.Q + G @ self.Q_gyro @ G.T)
+            ## convert to discrete time models
+            A_d = 
             G_d =
             # update P with discrete time model
             self.P =
