@@ -47,10 +47,10 @@ class observer:
         self.estimated_state.Va = np.sqrt(1/MAV.rho*self.lpf_static.update(measurements.diff_pressure))
 
         # estimate phi and theta with simple ekf
-        self.attitude_ekf.update(self.estimated_state, measurements)
+        # self.attitude_ekf.update(self.estimated_state, measurements)
 
         # estimate pn, pe, Vg, chi, wn, we, psi
-        self.position_ekf.update(self.estimated_state, measurements)
+        # self.position_ekf.update(self.estimated_state, measurements)
 
         # not estimating these
         self.estimated_state.alpha = self.estimated_state.theta
