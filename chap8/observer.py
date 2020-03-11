@@ -154,7 +154,12 @@ class ekf_position:
     def __init__(self):
         Q_tune = 1 #TODO need to tune this
         self.Q = Q_tune*np.identity(7)
-        self.R = SENSOR.accel_sigma**2*np.identity(3) #is this the right sensor?
+        self.R = np.array([[SENSOR.gps_n_sigma**2, 0.0, 0.0, 0.0, 0.0], \
+                           [0.0, SENSOR.gps_e_sigma ** 2, 0.0, 0.0, 0.0], \
+                           [0.0, 0.0, SENSOR.gps_h_sigma ** 2, 0.0, 0.0], \
+                           [0.0, 0.0, 0.0, SENSOR.gps_Vg_sigma ** 2, 0.0], \
+                           [0.0, 0.0, 0.0, 0.0, SENSOR.gps_course_sigma ** 2, ]])                         \
+
         self.N =  5 #TODO need to find the right value for this # number of prediction step per sample
         self.Ts = (SIM.ts_control / self.N)
         wn0 = 0.0
@@ -169,7 +174,7 @@ class ekf_position:
 
     def update(self, state, measurement):
         self.propagate_model(state)
-        # self.measurement_update(state, measurement)
+        self.measurement_update(state, measurement)
         state.pn = self.xhat.item(0)
         state.pe = self.xhat.item(1)
         state.Vg = self.xhat.item(2)
@@ -204,7 +209,6 @@ class ekf_position:
 
     def h_gps(self, x, state):
         # measurement model for gps measurements
-        #TODO I don't think I implemented the two h functions correctly
         pn = x[0][0]
         pe = x[1][0]
         Vg = x[2][0]
@@ -233,12 +237,8 @@ class ekf_position:
         psi = x[6][0]
         Va = state.Va
 
-        _h = np.array([[pn,
-                        pe,
-                        Vg,
-                        chi,
-                        Va * np.cos(psi) + wn - Vg * np.cos(chi),
-                        Va * np.sin(psi) + we - Vg * np.sin(chi)]]).T
+        _h = np.array([[Va*np.cos(psi) + wn - Vg*np.cos(chi), \
+                        Va*np.sin(psi) + we - Vg*np.sin(chi)]]).T
         return _h
 
     def propagate_model(self, state):
@@ -262,10 +262,10 @@ class ekf_position:
         C = jacobian(self.h_pseudo, self.xhat, state)
         y = np.array([0, 0])
         for i in range(0, 2):
-            Ci = C[i]
-            L = self.P@Ci.T@np.linalg.inv(self.R[i] + Ci@self.P@Ci.T)
-            self.P = (np.identity(2)-L@Ci)@self.P@(np.identity(2)-L@Ci).T + L@self.R[i]@L.T
-            self.xhat = self.xhat + L@(y[i]-h[i])
+            Ci = np.array([C[i]])
+            L = self.P@Ci.T@np.linalg.inv(Ci@self.P@Ci.T) #I left R out of the wind triangle calculations. Is that right???
+            self.P = (np.identity(7)-L@Ci)@self.P@(np.identity(7)-L@Ci).T
+            self.xhat = self.xhat + np.array([L@(y[i]-h[i])]).T
 
         # only update GPS when one of the signals changes
         if (measurement.gps_n != self.gps_n_old) \
@@ -277,10 +277,11 @@ class ekf_position:
             C = jacobian(self.h_gps, self.xhat, state)
             y = np.array([measurement.gps_n, measurement.gps_e, measurement.gps_Vg, measurement.gps_course])
             for i in range(0, 4):
-                Ci = C[i]
-                L = self.P @ Ci.T @ np.linalg.inv(self.R[i] + Ci @ self.P @ Ci.T)
-                self.P = (np.identity(2) - L @ Ci) @ self.P @ (np.identity(2) - L @ Ci).T + L @ self.R[i] @ L.T
-                self.xhat = self.xhat + L @ (y[i] - h[i])
+                Ci = np.array([C[i]])
+                L = self.P @ Ci.T @ np.linalg.inv(self.R[i][i] + Ci @ self.P @ Ci.T)
+                self.P = (np.identity(7) - L @ Ci) @ self.P @ (np.identity(7) - L @ Ci).T + L @ np.array([[self.R[i][i]]]) @ L.T
+                self.xhat = self.xhat + np.array([L @ (y[i] - h[i])]).T
+
             # update stored GPS signals
             self.gps_n_old = measurement.gps_n
             self.gps_e_old = measurement.gps_e
