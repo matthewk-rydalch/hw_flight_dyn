@@ -80,14 +80,14 @@ class ekf_attitude:
         self.Q_gyro = (0.13*np.pi/180.) ** 2 * np.identity(4) #TODO switch this back
         # self.R_accel = SENSOR.accel_sigma**2*np.identity(3)
         self.R_accel = (0.0025 * 9.8)**2*np.identity(3) #TODO switch this back
-        self.N = 20  #TODO get the right number of prediction step per sample
+        self.N = 5  #TODO get the right number of prediction step per sample
         self.xhat = np.array([[initial_state.phi, initial_state.theta]]).T# initial state: phi, theta
         self.P = np.identity(2)
         self.Ts = SIM.ts_control/self.N
 
     def update(self, state, measurement):
         self.propagate_model(state)
-        # self.measurement_update(state, measurement)
+        self.measurement_update(state, measurement)
         state.phi = self.xhat.item(0)
         state.theta = self.xhat.item(1)
 
@@ -147,7 +147,7 @@ class ekf_attitude:
                 Ci = np.array([C[i]])
                 L = self.P@Ci.T@np.linalg.inv(self.R_accel[i][i]+Ci@self.P@Ci.T)#I have a scalar in the inverse.  Is that right????
                 self.P = (np.identity(2)-L@Ci)@self.P@(np.identity(2)-L@Ci).T + L@np.array([[self.R_accel[i][i]]])@L.T
-                self.xhat = self.xhat+L@(y[i]-h[i])
+                self.xhat = self.xhat+np.array([L@(y[i]-h[i])]).T
 
 class ekf_position:
     # implement continous-discrete EKF to estimate pn, pe, chi, Vg
