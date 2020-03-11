@@ -47,7 +47,7 @@ class observer:
         self.estimated_state.Va = np.sqrt(2.0/MAV.rho*self.lpf_diff.update(measurements.diff_pressure))
 
         # estimate phi and theta with simple ekf
-        # self.attitude_ekf.update(self.estimated_state, measurements)
+        self.attitude_ekf.update(self.estimated_state, measurements)
 
         # estimate pn, pe, Vg, chi, wn, we, psi
         # self.position_ekf.update(self.estimated_state, measurements)
@@ -76,10 +76,10 @@ class ekf_attitude:
     def __init__(self, initial_state):
         Q_tune = 1 #TODO tune this
         self.Q = Q_tune*np.identity(2)
-        self.Q_gyro = SENSOR.gyro_sigma**2*np.identity(3)
+        self.Q_gyro = SENSOR.gyro_sigma**2*np.identity(4) #TODO decide if you want to drop this to 3x3 and shave off zeros in G
         self.R_accel = SENSOR.accel_sigma**2*np.identity(3)
         self.N = 5  #TODO get the right number of prediction step per sample
-        self.xhat =  np.array([[initial_state.phi, initial_state.theta]]).T# initial state: phi, theta
+        self.xhat = np.array([[initial_state.phi, initial_state.theta]]).T# initial state: phi, theta
         self.P = np.identity(2)
         self.Ts = SIM.ts_control/self.N
 
@@ -98,7 +98,7 @@ class ekf_attitude:
         theta = x[1][0]
 
         _f = np.array([[p+q*np.sin(phi)*np.tan(theta)+r*np.cos(phi)*np.tan(theta), \
-                        q*np.cos(phi)-r*np.sin(phi)]])
+                        q*np.cos(phi)-r*np.sin(phi)]]).T
         return _f
 
     def h(self, x, state):
@@ -126,15 +126,15 @@ class ekf_attitude:
             A = jacobian(self.f, self.xhat, state)
             # compute G matrix for gyro noise
             G = np.array([[1.0, np.sin(state.phi)*np.tan(state.theta), np.cos(state.phi)*np.tan(state.theta), 0],\
-                           0.0, np.cos(state.phi), -np.sin(state.phi), 0.0])
+                           [0.0, np.cos(state.phi), -np.sin(state.phi), 0.0]])
             # update P with continuous time model
-            self.P = self.P + self.Ts * (A @ self.P + self.P @ A.T + self.Q + G @ self.Q_gyro @ G.T)
+            self.P = self.P + Tp * (A @ self.P + self.P @ A.T + self.Q + G @ self.Q_gyro @ G.T)
             ## convert to discrete time models
             A_d = np.identity(2) + A*Tp + A@A*Tp**2
             #TODO figure out how to use G_d
             # G_d =
             # update P with discrete time model
-            self.P = A_d@self.P@A_d.T+Tp**2@self.Q
+            self.P = A_d@self.P@A_d.T+Tp**2*self.Q
 
     def measurement_update(self, state, measurement):
         # measurement updates
