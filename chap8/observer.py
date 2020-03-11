@@ -47,10 +47,10 @@ class observer:
         self.estimated_state.Va = np.sqrt(2.0/MAV.rho*self.lpf_diff.update(measurements.diff_pressure))
 
         # estimate phi and theta with simple ekf
-        self.attitude_ekf.update(self.estimated_state, measurements)
+        # self.attitude_ekf.update(self.estimated_state, measurements)
 
         # estimate pn, pe, Vg, chi, wn, we, psi
-        # self.position_ekf.update(self.estimated_state, measurements)
+        self.position_ekf.update(self.estimated_state, measurements)
 
         # not estimating these
         self.estimated_state.alpha = self.estimated_state.theta
@@ -153,14 +153,14 @@ class ekf_position:
     # implement continous-discrete EKF to estimate pn, pe, chi, Vg
     def __init__(self):
         Q_tune = 1 #TODO need to tune this
-        self.Q = Q_tune*np.identity(4)
+        self.Q = Q_tune*np.identity(7)
         self.R = SENSOR.accel_sigma**2*np.identity(3) #is this the right sensor?
         self.N =  5 #TODO need to find the right value for this # number of prediction step per sample
         self.Ts = (SIM.ts_control / self.N)
         wn0 = 0.0
         we0 = 0.0
         self.xhat = np.array([[MAV.pn0, MAV.pe0, MAV.Va0, MAV.psi0, wn0, we0, MAV.psi0]])
-        self.P = np.identity(2)
+        self.P = np.identity(7)
         self.gps_n_old = 9999
         self.gps_e_old = 9999
         self.gps_Vg_old = 9999
@@ -169,7 +169,7 @@ class ekf_position:
 
     def update(self, state, measurement):
         self.propagate_model(state)
-        self.measurement_update(state, measurement)
+        # self.measurement_update(state, measurement)
         state.pn = self.xhat.item(0)
         state.pe = self.xhat.item(1)
         state.Vg = self.xhat.item(2)
@@ -180,11 +180,11 @@ class ekf_position:
 
     def f(self, x, state):
         # system dynamics for propagation model: xdot = f(x, u)
-        Vg = x[2][0]
-        chi = x[3][0]
-        wn = x[4][0]
-        we = x[5][0]
-        psi = x[6][0]
+        Vg = x[0][2]
+        chi = x[0][3]
+        wn = x[0][4]
+        we = x[0][5]
+        psi = x[0][6]
         Va = state.Va
         r = state.r #is r psi dot?  The equation actually uses psi dot
         g = MAV.gravity
@@ -250,11 +250,11 @@ class ekf_position:
             # compute Jacobian
             A = jacobian(self.f, self.xhat, state)
             # update P with continuous time model
-            # self.P = self.P + self.Ts * (A @ self.P + self.P @ A.T + self.Q + G @ self.Q @ G.T) #TODO need to implement this function as it has G
+            # self.P = self.P + self.Ts * (A @ self.P + self.P @ A.T + self.Q + G @ self.Q @ G.T)
             # convert to discrete time models
-            A_d = np.identity(2) + A*Tp + A@A*Tp**2
+            A_d = np.identity(7) + A*Tp + A@A*Tp**2
             # update P with discrete time model
-            self.P = A_d@self.P@A_d.T + Tp**2@self.Q
+            self.P = A_d@self.P@A_d.T + Tp**2*self.Q
 
     def measurement_update(self, state, measurement):
         # always update based on wind triangle pseudu measurement
