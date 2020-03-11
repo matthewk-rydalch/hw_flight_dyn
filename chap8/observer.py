@@ -44,7 +44,7 @@ class observer:
 
         # invert sensor model to get altitude and airspeed
         self.estimated_state.h = self.lpf_static.update(measurements.static_pressure)/(MAV.rho*MAV.gravity)
-        self.estimated_state.Va = np.sqrt(1/MAV.rho*self.lpf_static.update(measurements.diff_pressure))
+        self.estimated_state.Va = np.sqrt(2.0/MAV.rho*self.lpf_diff.update(measurements.diff_pressure))
 
         # estimate phi and theta with simple ekf
         # self.attitude_ekf.update(self.estimated_state, measurements)
