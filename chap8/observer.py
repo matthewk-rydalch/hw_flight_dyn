@@ -144,9 +144,9 @@ class ekf_attitude:
         y = np.array([measurement.accel_x, measurement.accel_y, measurement.accel_z])
         for i in range(0, 3):
             if np.abs(y[i]-h[i,0]) < threshold:
-                Ci = C[i]
-                L = self.P@Ci.T@np.linalg.inv(self.R_accel[i]+Ci@self.P@Ci.T)
-                self.P = (np.identity(2)-L@Ci)@self.P@(np.identity(2)-L@Ci).T + L@self.R[i]@L.T
+                Ci = np.array([C[i]])
+                L = self.P@Ci.T@np.linalg.inv(self.R_accel[i][i]+Ci@self.P@Ci.T)#I have a scalar in the inverse.  Is that right????
+                self.P = (np.identity(2)-L@Ci)@self.P@(np.identity(2)-L@Ci).T + L@np.array([[self.R_accel[i][i]]])@L.T
                 self.xhat = self.xhat+L@(y[i]-h[i])
 
 class ekf_position:
