@@ -20,6 +20,18 @@ class observer:
     def __init__(self, ts_control):
         # initialized estimated state message
         self.estimated_state = msg_state()
+        self.estimated_state.pn = MAV.pn0  # initial north position
+        self.estimated_state.pe = MAV.pe0  # initial east position
+        self.estimated_state.h = -MAV.pd0  # initial down position
+        self.estimated_state.phi = MAV.phi0
+        self.estimated_state.theta = MAV.theta0
+        self.estimated_state.psi = MAV.psi0
+        self.estimated_state.Va = MAV.Va0
+        self.estimated_state.p = MAV.p0
+        self.estimated_state.q = MAV.q0
+        self.estimated_state.r = MAV.r0
+        self.estimated_state.Vg = MAV.Va0
+
         # use alpha filters to low pass filter gyros and accels
         self.lpf_gyro_x = alpha_filter(alpha=0.5)
         self.lpf_gyro_y = alpha_filter(alpha=0.5)
@@ -76,10 +88,10 @@ class ekf_attitude:
     def __init__(self, initial_state):
         Q_tune = 0.1 #TODO tune this
         self.Q = Q_tune*np.identity(2)
-        # self.Q_gyro = SENSOR.gyro_sigma**2*np.identity(4) #TODO decide if you want to drop this to 3x3 and shave off zeros in G
-        self.Q_gyro = (0.13*np.pi/180.) ** 2 * np.identity(4) #TODO switch this back
-        # self.R_accel = SENSOR.accel_sigma**2*np.identity(3)
-        self.R_accel = (0.0025 * 9.8)**2*np.identity(3) #TODO switch this back
+        self.Q_gyro = SENSOR.gyro_sigma**2*np.identity(4) #TODO decide if you want to drop this to 3x3 and shave off zeros in G
+        # self.Q_gyro = (0.13*np.pi/180.) ** 2 * np.identity(4)
+        self.R_accel = SENSOR.accel_sigma**2*np.identity(3)
+        # self.R_accel = (0.0025 * 9.8)**2*np.identity(3)
         self.N = 5  #TODO get the right number of prediction step per sample
         self.xhat = np.array([[initial_state.phi, initial_state.theta]]).T# initial state: phi, theta
         self.P = np.identity(2)
@@ -155,12 +167,13 @@ class ekf_position:
     def __init__(self):
         Q_tune = 3 #TODO need to tune this
         self.Q = Q_tune*np.identity(7)
-        # self.R = np.array([[SENSOR.gps_n_sigma**2, 0.0, 0.0, 0.0, 0.0], \
-        #                    [0.0, SENSOR.gps_e_sigma ** 2, 0.0, 0.0, 0.0], \
-        #                    [0.0, 0.0, SENSOR.gps_h_sigma ** 2, 0.0, 0.0], \
-        #                    [0.0, 0.0, 0.0, SENSOR.gps_Vg_sigma ** 2, 0.0], \
-        #                    [0.0, 0.0, 0.0, 0.0, SENSOR.gps_course_sigma ** 2, ]])                         \
-        self.R = 0.21**2*np.identity(7) #TODO change this back
+        self.R = np.array([[SENSOR.gps_n_sigma**2, 0.0, 0.0, 0.0, 0.0], \
+                           [0.0, SENSOR.gps_e_sigma ** 2, 0.0, 0.0, 0.0], \
+                           [0.0, 0.0, SENSOR.gps_h_sigma ** 2, 0.0, 0.0], \
+                           [0.0, 0.0, 0.0, SENSOR.gps_Vg_sigma ** 2, 0.0], \
+                           [0.0, 0.0, 0.0, 0.0, SENSOR.gps_course_sigma ** 2, ]])
+
+        # self.R = 0.21**2*np.identity(7)
         self.N =  5 #TODO need to find the right value for this # number of prediction step per sample
         self.Ts = (SIM.ts_control / self.N)
         wn0 = 0.0
@@ -267,26 +280,26 @@ class ekf_position:
             self.P[4:6,4:6] = (np.identity(2) - L @ Ci) @ self.P[4:6,4:6] @ (np.identity(2) - L @ Ci).T + L @ np.array([[wind_sig]]) @ L.T
             self.xhat[4:6] = self.xhat[4:6] + np.array([L @ (y[i] - h[i])]).T
 
-        # only update GPS when one of the signals changes
-        if (measurement.gps_n != self.gps_n_old) \
-            or (measurement.gps_e != self.gps_e_old) \
-            or (measurement.gps_Vg != self.gps_Vg_old) \
-            or (measurement.gps_course != self.gps_course_old):
-
-            h = self.h_gps(self.xhat, state)
-            C = jacobian(self.h_gps, self.xhat, state)
-            y = np.array([measurement.gps_n, measurement.gps_e, measurement.gps_Vg, measurement.gps_course])
-            for i in range(0, 4):
-                Ci = np.array([C[i][0:4]])
-                L = self.P[0:4,0:4] @ Ci.T @ np.linalg.inv(self.R[i][i] + Ci @ self.P[0:4,0:4] @ Ci.T)
-                self.P[0:4,0:4] = (np.identity(4) - L @ Ci) @ self.P[0:4,0:4] @ (np.identity(4) - L @ Ci).T + L @ np.array([[self.R[i][i]]]) @ L.T
-                self.xhat[0:4,0:4] = self.xhat[0:4,0:4] + np.array([L @ (y[i] - h[i])]).T
-
-            # update stored GPS signals
-            self.gps_n_old = measurement.gps_n
-            self.gps_e_old = measurement.gps_e
-            self.gps_Vg_old = measurement.gps_Vg
-            self.gps_course_old = measurement.gps_course
+        # # only update GPS when one of the signals changes
+        # if (measurement.gps_n != self.gps_n_old) \
+        #     or (measurement.gps_e != self.gps_e_old) \
+        #     or (measurement.gps_Vg != self.gps_Vg_old) \
+        #     or (measurement.gps_course != self.gps_course_old):
+        #
+        #     h = self.h_gps(self.xhat, state)
+        #     C = jacobian(self.h_gps, self.xhat, state)
+        #     y = np.array([measurement.gps_n, measurement.gps_e, measurement.gps_Vg, measurement.gps_course])
+        #     for i in range(0, 4):
+        #         Ci = np.array([C[i][0:4]])
+        #         L = self.P[0:4,0:4] @ Ci.T @ np.linalg.inv(self.R[i][i] + Ci @ self.P[0:4,0:4] @ Ci.T)
+        #         self.P[0:4,0:4] = (np.identity(4) - L @ Ci) @ self.P[0:4,0:4] @ (np.identity(4) - L @ Ci).T + L @ np.array([[self.R[i][i]]]) @ L.T
+        #         self.xhat[0:4,0:4] = self.xhat[0:4,0:4] + np.array([L @ (y[i] - h[i])]).T
+        #
+        #     # update stored GPS signals
+        #     self.gps_n_old = measurement.gps_n
+        #     self.gps_e_old = measurement.gps_e
+        #     self.gps_Vg_old = measurement.gps_Vg
+        #     self.gps_course_old = measurement.gps_course
 
 def jacobian(fun, x, state):
     # compute jacobian of fun with respect to x
