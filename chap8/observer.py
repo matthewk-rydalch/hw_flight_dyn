@@ -137,6 +137,7 @@ class ekf_attitude:
             self.P = A_d@self.P@A_d.T + Tp**2 * (G@self.Q_gyro@G.T + self.Q)
 
     def measurement_update(self, state, measurement):
+        #Possibly get rid of for loop and do it all together???
         # measurement updates
         threshold = 2.0
         h = self.h(self.xhat, state)
@@ -260,10 +261,11 @@ class ekf_position:
         C = jacobian(self.h_pseudo, self.xhat, state)
         y = np.array([0, 0])
         for i in range(0,2):
-            Ci = np.array([C[i]])
-            L = self.P @ Ci.T @ np.linalg.inv(self.R[i][i] + Ci @ self.P @ Ci.T)
-            self.P = (np.identity(7) - L @ Ci) @ self.P @ (np.identity(7) - L @ Ci).T + L @ np.array([[self.R[i][i]]]) @ L.T
-            self.xhat = self.xhat + np.array([L @ (y[i] - h[i])]).T
+            Ci = np.array([C[i][4:6]])
+            wind_sig = 0.0 #change this back to R?
+            L = self.P[4:6,4:6] @ Ci.T @ np.linalg.inv(wind_sig**2 + Ci @ self.P[4:6,4:6] @ Ci.T)
+            self.P[4:6,4:6] = (np.identity(2) - L @ Ci) @ self.P[4:6,4:6] @ (np.identity(2) - L @ Ci).T + L @ np.array([[wind_sig]]) @ L.T
+            self.xhat[4:6] = self.xhat[4:6] + np.array([L @ (y[i] - h[i])]).T
 
         # only update GPS when one of the signals changes
         if (measurement.gps_n != self.gps_n_old) \
@@ -275,10 +277,10 @@ class ekf_position:
             C = jacobian(self.h_gps, self.xhat, state)
             y = np.array([measurement.gps_n, measurement.gps_e, measurement.gps_Vg, measurement.gps_course])
             for i in range(0, 4):
-                Ci = np.array([C[i]])
-                L = self.P @ Ci.T @ np.linalg.inv(self.R[i][i] + Ci @ self.P @ Ci.T)
-                self.P = (np.identity(7) - L @ Ci) @ self.P @ (np.identity(7) - L @ Ci).T + L @ np.array([[self.R[i][i]]]) @ L.T
-                self.xhat = self.xhat + np.array([L @ (y[i] - h[i])]).T
+                Ci = np.array([C[i][0:4]])
+                L = self.P[0:4,0:4] @ Ci.T @ np.linalg.inv(self.R[i][i] + Ci @ self.P[0:4,0:4] @ Ci.T)
+                self.P[0:4,0:4] = (np.identity(4) - L @ Ci) @ self.P[0:4,0:4] @ (np.identity(4) - L @ Ci).T + L @ np.array([[self.R[i][i]]]) @ L.T
+                self.xhat[0:4,0:4] = self.xhat[0:4,0:4] + np.array([L @ (y[i] - h[i])]).T
 
             # update stored GPS signals
             self.gps_n_old = measurement.gps_n
