@@ -152,7 +152,7 @@ class ekf_attitude:
 class ekf_position:
     # implement continous-discrete EKF to estimate pn, pe, chi, Vg
     def __init__(self):
-        Q_tune = 1 #TODO need to tune this
+        Q_tune = 3 #TODO need to tune this
         self.Q = Q_tune*np.identity(7)
         # self.R = np.array([[SENSOR.gps_n_sigma**2, 0.0, 0.0, 0.0, 0.0], \
         #                    [0.0, SENSOR.gps_e_sigma ** 2, 0.0, 0.0, 0.0], \
