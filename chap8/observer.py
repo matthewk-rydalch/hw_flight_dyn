@@ -86,7 +86,7 @@ class alpha_filter:
 class ekf_attitude:
     # implement continous-discrete EKF to estimate roll and pitch angles
     def __init__(self, initial_state):
-        Q_tune = 0.1 #TODO tune this
+        Q_tune = 1e-9 #TODO tune this
         self.Q = Q_tune*np.identity(2)
         self.Q_gyro = SENSOR.gyro_sigma**2*np.identity(4) #TODO decide if you want to drop this to 3x3 and shave off zeros in G
         # self.Q_gyro = (0.13*np.pi/180.) ** 2 * np.identity(4)
@@ -165,15 +165,18 @@ class ekf_attitude:
 class ekf_position:
     # implement continous-discrete EKF to estimate pn, pe, chi, Vg
     def __init__(self):
-        Q_tune = 3 #TODO need to tune this
+        Q_tune =1 #TODO need to tune this
         self.Q = Q_tune*np.identity(7)
+        wind_prop = 1.0
+        self.Q[4][4] = wind_prop
+        self.Q[5][5] = wind_prop
         self.R = np.array([[SENSOR.gps_n_sigma**2, 0.0, 0.0, 0.0], \
                            [0.0, SENSOR.gps_e_sigma ** 2, 0.0, 0.0], \
                            [0.0, 0.0, SENSOR.gps_Vg_sigma ** 2, 0.0], \
                            [0.0, 0.0, 0.0, SENSOR.gps_course_sigma ** 2, ]])
 
         # self.R = 0.21**2*np.identity(7)
-        self.N =  5 #TODO need to find the right value for this # number of prediction step per sample
+        self.N =  20 #TODO need to find the right value for this # number of prediction step per sample
         self.Ts = (SIM.ts_control / self.N)
         wn0 = 0.0
         we0 = 0.0
@@ -204,20 +207,21 @@ class ekf_position:
         we = x[5][0]
         psi = x[6][0]
         Va = state.Va
-        r = state.r #is r psi dot?  The equation actually uses psi dot
+        r = state.r
         g = MAV.gravity
         phi = state.phi
         theta = state.theta
         q = state.q
+        psi_dot = q*np.sin(phi)/np.cos(theta)+r*np.cos(phi)/np.cos(theta)
 
 
         _f = np.array([[Vg*np.cos(chi), \
                         Vg*np.sin(chi), \
-                        ((Va*np.cos(psi)+wn)*(-Va*r*np.sin(psi))+(Va*np.sin(psi)+we)*(Va*r*np.cos(psi)))/Vg, \
+                        ((Va*np.cos(psi)+wn)*(-Va*psi_dot*np.sin(psi))+(Va*np.sin(psi)+we)*(Va*psi_dot*np.cos(psi)))/Vg, \
                         g/Vg*np.tan(phi)*np.cos(chi-psi), \
                         0.0, \
                         0.0, \
-                        q*np.sin(phi)/np.cos(theta)+r*np.cos(phi)/np.cos(theta)]]).T
+                        psi_dot]]).T
         return _f
 
     def h_gps(self, x, state):
@@ -250,6 +254,7 @@ class ekf_position:
 
         _h = np.array([[Va*np.cos(psi) + wn - Vg*np.cos(chi), \
                         Va*np.sin(psi) + we - Vg*np.sin(chi)]]).T
+
         return _h
 
     def propagate_model(self, state):
@@ -274,7 +279,7 @@ class ekf_position:
         y = np.array([0, 0])
         for i in range(0,2):
             Ci = np.array([C[i][4:6]])
-            wind_sig = 0.0 #change this back to R?
+            wind_sig = 0.01 #change this back to R?
             L = self.P[4:6,4:6] @ Ci.T @ np.linalg.inv(wind_sig**2 + Ci @ self.P[4:6,4:6] @ Ci.T)
             self.P[4:6,4:6] = (np.identity(2) - L @ Ci) @ self.P[4:6,4:6] @ (np.identity(2) - L @ Ci).T + L @ np.array([[wind_sig]]) @ L.T
             self.xhat[4:6] = self.xhat[4:6] + np.array([L @ (y[i] - h[i])]).T
