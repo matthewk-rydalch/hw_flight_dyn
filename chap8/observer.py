@@ -47,7 +47,7 @@ class observer:
         self.estimated_state.Va = np.sqrt(2.0/MAV.rho*self.lpf_diff.update(measurements.diff_pressure))
 
         # estimate phi and theta with simple ekf
-        # self.attitude_ekf.update(self.estimated_state, measurements)
+        self.attitude_ekf.update(self.estimated_state, measurements)
 
         # estimate pn, pe, Vg, chi, wn, we, psi
         self.position_ekf.update(self.estimated_state, measurements)
@@ -154,17 +154,17 @@ class ekf_position:
     def __init__(self):
         Q_tune = 1 #TODO need to tune this
         self.Q = Q_tune*np.identity(7)
-        self.R = np.array([[SENSOR.gps_n_sigma**2, 0.0, 0.0, 0.0, 0.0], \
-                           [0.0, SENSOR.gps_e_sigma ** 2, 0.0, 0.0, 0.0], \
-                           [0.0, 0.0, SENSOR.gps_h_sigma ** 2, 0.0, 0.0], \
-                           [0.0, 0.0, 0.0, SENSOR.gps_Vg_sigma ** 2, 0.0], \
-                           [0.0, 0.0, 0.0, 0.0, SENSOR.gps_course_sigma ** 2, ]])                         \
-
+        # self.R = np.array([[SENSOR.gps_n_sigma**2, 0.0, 0.0, 0.0, 0.0], \
+        #                    [0.0, SENSOR.gps_e_sigma ** 2, 0.0, 0.0, 0.0], \
+        #                    [0.0, 0.0, SENSOR.gps_h_sigma ** 2, 0.0, 0.0], \
+        #                    [0.0, 0.0, 0.0, SENSOR.gps_Vg_sigma ** 2, 0.0], \
+        #                    [0.0, 0.0, 0.0, 0.0, SENSOR.gps_course_sigma ** 2, ]])                         \
+        self.R = 0.21**2*np.identity(7) #TODO change this back
         self.N =  5 #TODO need to find the right value for this # number of prediction step per sample
         self.Ts = (SIM.ts_control / self.N)
         wn0 = 0.0
         we0 = 0.0
-        self.xhat = np.array([[MAV.pn0, MAV.pe0, MAV.Va0, MAV.psi0, wn0, we0, MAV.psi0]])
+        self.xhat = np.array([[MAV.pn0, MAV.pe0, MAV.Va0, MAV.psi0, wn0, we0, MAV.psi0]]).T
         self.P = np.identity(7)
         self.gps_n_old = 9999
         self.gps_e_old = 9999
@@ -185,11 +185,11 @@ class ekf_position:
 
     def f(self, x, state):
         # system dynamics for propagation model: xdot = f(x, u)
-        Vg = x[0][2]
-        chi = x[0][3]
-        wn = x[0][4]
-        we = x[0][5]
-        psi = x[0][6]
+        Vg = x[2][0]
+        chi = x[3][0]
+        wn = x[4][0]
+        we = x[5][0]
+        psi = x[6][0]
         Va = state.Va
         r = state.r #is r psi dot?  The equation actually uses psi dot
         g = MAV.gravity
@@ -221,9 +221,7 @@ class ekf_position:
         _h = np.array([[pn,
                         pe,
                         Vg,
-                        chi,
-                        Va*np.cos(psi) + wn - Vg*np.cos(chi),
-                        Va*np.sin(psi) + we - Vg*np.sin(chi)]]).T
+                        chi]]).T
         return _h
 
     def h_pseudo(self, x, state):
@@ -261,11 +259,11 @@ class ekf_position:
         h = self.h_pseudo(self.xhat, state)
         C = jacobian(self.h_pseudo, self.xhat, state)
         y = np.array([0, 0])
-        for i in range(0, 2):
+        for i in range(0,2):
             Ci = np.array([C[i]])
-            L = self.P@Ci.T@np.linalg.inv(Ci@self.P@Ci.T) #I left R out of the wind triangle calculations. Is that right???
-            self.P = (np.identity(7)-L@Ci)@self.P@(np.identity(7)-L@Ci).T
-            self.xhat = self.xhat + np.array([L@(y[i]-h[i])]).T
+            L = self.P @ Ci.T @ np.linalg.inv(self.R[i][i] + Ci @ self.P @ Ci.T)
+            self.P = (np.identity(7) - L @ Ci) @ self.P @ (np.identity(7) - L @ Ci).T + L @ np.array([[self.R[i][i]]]) @ L.T
+            self.xhat = self.xhat + np.array([L @ (y[i] - h[i])]).T
 
         # only update GPS when one of the signals changes
         if (measurement.gps_n != self.gps_n_old) \
