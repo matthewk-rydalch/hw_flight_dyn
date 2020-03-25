@@ -9,7 +9,6 @@ sys.path.append('..')
 import numpy as np
 import parameters.simulation_parameters as SIM
 
-from chap2.mav_viewer import mav_viewer ## for debugging
 from chap3.data_viewer import data_viewer
 from chap4.wind_simulation import wind_simulation
 from chap6.autopilot import autopilot
@@ -17,12 +16,10 @@ from chap7.mav_dynamics import mav_dynamics
 from chap8.observer import observer
 from chap10.path_follower import path_follower
 from chap10.path_viewer import path_viewer
-from tools.signals import signals ## for debugging
 
 # initialize the visualization
 VIDEO = False  # True==write video, False==don't write video
 path_view = path_viewer()  # initialize the viewer
-mav_view = mav_viewer()  ## for debugging
 data_view = data_viewer()  # initialize view of data plots
 if VIDEO == True:
     from chap2.video_writer import video_writer
@@ -35,13 +32,13 @@ wind = wind_simulation(SIM.ts_simulation)
 mav = mav_dynamics(SIM.ts_simulation)
 ctrl = autopilot(SIM.ts_simulation)
 obsv = observer(SIM.ts_simulation)
-# path_follow = path_follower()
+path_follow = path_follower()
 
 # path definition
 from message_types.msg_path import msg_path
 path = msg_path()
-path.flag = 'line'
-#path.flag = 'orbit'
+# path.flag = 'line'
+path.flag = 'orbit'
 if path.flag == 'line':
     path.line_origin = np.array([[0.0, 0.0, -100.0]]).T
     path.line_direction = np.array([[0.5, 1.0, 0.0]]).T
@@ -51,14 +48,6 @@ else:  # path.flag == 'orbit'
     path.orbit_radius = 300.0  # radius of the orbit
     path.orbit_direction = 'CW'  # orbit direction: 'CW'==clockwise, 'CCW'==counter clockwise
 
-##for debuggin
-# autopilot commands
-from message_types.msg_autopilot import msg_autopilot
-commands = msg_autopilot()
-Va_command = signals(dc_offset=25.0, amplitude=3.0, start_time=2.0, frequency = 0.01)
-h_command = signals(dc_offset=100.0, amplitude=10.0, start_time=0.0, frequency = 0.02)
-chi_command = signals(dc_offset=np.radians(0.0), amplitude=np.radians(45.0), start_time=5.0, frequency = 0.015)
-
 # initialize the simulation time
 sim_time = SIM.start_time
 
@@ -66,32 +55,24 @@ sim_time = SIM.start_time
 print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
 
-    ##for debugging
-    #-------autopilot commands-------------
-    commands.airspeed_command = Va_command.square(sim_time)
-    commands.course_command = chi_command.square(sim_time)
-    commands.altitude_command = h_command.square(sim_time)
-
     #-------observer-------------
-    mav.update_sensors() ##I added, seems to be necessary
+    mav.update_sensors() #I added, seems to be necessary
     measurements = mav._sensors  # get sensor measurements
     estimated_state = obsv.update(measurements)  # estimate states from measurements
 
     #-------path follower-------------
     # autopilot_commands = path_follow.update(path, estimated_state)
-    #autopilot_commands = path_follow.update(path, mav.true_state)  # for debugging
+    autopilot_commands = path_follow.update(path, mav.msg_true_state)  #TODO for debugging
 
     #-------controller-------------
-    # delta, commanded_state = ctrl.update(autopilot_commands, estimated_state)
-    delta, commanded_state = ctrl.update(commands, estimated_state)
+    delta, commanded_state = ctrl.update(autopilot_commands, estimated_state)
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------
-    mav_view.update(mav.msg_true_state)  ## for debugging
-    # path_view.update(path, mav.msg_true_state)  # plot path and MAV
+    path_view.update(path, mav.msg_true_state)  # plot path and MAV
     data_view.update(mav.msg_true_state, # true states
                      estimated_state, # estimated states
                      commanded_state, # commanded states

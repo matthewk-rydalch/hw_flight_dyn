@@ -33,21 +33,21 @@ class path_follower:
 
         #calculate intermediate values
         chi_q = self._wrap(atan2(qe, qn), state.chi)
-        Rp = np.array([[cos(chi_q), sin(chi_q), 0.0]
-                       [-sin(chi_q), cos(chi_q), 0.0]
+        Rp = np.array([[cos(chi_q), sin(chi_q), 0.0], \
+                       [-sin(chi_q), cos(chi_q), 0.0], \
                        [0.0, 0.0, 1.0]])
         epi = (p-r)
         ep = Rp*epi
         epy = ep[1][0]
-        rd = r[2]
-        k = np.array([[0.0, 0.0, 1.0]]).T
-        n = np.cross(q,k)/np.linalg.norm(np.cross(q,k))
-        si = epi-np.dot(epi,n)*n
+        rd = r[2][0]
+        k = np.array([0.0, 0.0, 1.0])
+        n = np.cross(q.T[0],k)/np.linalg.norm(np.cross(q.T[0],k)) #np.cross requires a 1 d array
+        si = epi.T[0]-np.dot(epi.T[0],n)*n #reduced dimension of epi to match n's dimension
         sn = si[0]
         se = si[1]
 
         #calulate command outputs
-        chi_c = chi_q - self.chi_inf*2.0/np.pi*atan(self.k_path, epy) #may need to change as shown on pg 181
+        chi_c = chi_q - self.chi_inf*2.0/np.pi*atan(self.k_path*epy) #may need to change as shown on pg 181
         h_c = -rd + np.sqrt(sn**2 + se**2)*(qd/np.sqrt(qn**2+qe**2))
 
         #package command outputs into message
@@ -67,7 +67,7 @@ class path_follower:
         ce = c[1][0]
         cd = c[2][0]
         rho = path.orbit_radius
-        if state.orbit_direction == 'CW':
+        if path.orbit_direction == 'CW':
             L = -1
         else:
             L = 1
