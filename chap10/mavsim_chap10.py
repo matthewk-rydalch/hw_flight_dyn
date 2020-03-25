@@ -65,10 +65,10 @@ while sim_time < SIM.end_time:
     autopilot_commands = path_follow.update(path, mav.msg_true_state)  #TODO for debugging
 
     #-------controller-------------
-    delta, commanded_state = ctrl.update(autopilot_commands, estimated_state)
+    delta, commanded_state = ctrl.update(autopilot_commands, mav.msg_true_state)#estimated_state) #TODO change this back
 
     #-------physical system-------------
-    current_wind = wind.update()  # get the new wind vector
+    current_wind = np.array([[0.0,0.0,0.0,0.0,0.0,0.0]]).T#wind.update()  # get the new wind vector #TODO change this back
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------

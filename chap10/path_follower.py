@@ -10,7 +10,7 @@ class path_follower:
         ## tuning parameters?
         self.chi_inf = 1.0  # approach angle for large distance from straight-line path
         self.k_path = 0.1  # proportional gain for straight-line path following
-        self.k_orbit = 0.1  # proportional gain for orbit following
+        self.k_orbit = 8.0  # proportional gain for orbit following
         self.gravity = 9.8
         self.autopilot_commands = msg_autopilot()  # message sent to autopilot
 
@@ -37,7 +37,7 @@ class path_follower:
                        [-sin(chi_q), cos(chi_q), 0.0], \
                        [0.0, 0.0, 1.0]])
         epi = (p-r)
-        ep = Rp*epi
+        ep = Rp@epi
         epy = ep[1][0]
         rd = r[2][0]
         k = np.array([0.0, 0.0, 1.0])
@@ -48,6 +48,7 @@ class path_follower:
 
         #calulate command outputs
         chi_c = chi_q - self.chi_inf*2.0/np.pi*atan(self.k_path*epy) #may need to change as shown on pg 181
+        # chi_c = chi_q-self.chi_inf*2.0/np.pi*atan(self.k_path*epy) #TODO change this back
         h_c = -rd + np.sqrt(sn**2 + se**2)*(qd/np.sqrt(qn**2+qe**2))
 
         #package command outputs into message
@@ -68,9 +69,9 @@ class path_follower:
         cd = c[2][0]
         rho = path.orbit_radius
         if path.orbit_direction == 'CW':
-            L = -1
-        else:
             L = 1
+        else:
+            L = -1
         g = 9.81
         phi_ff = 0.0 #can be changed below in command outputs if d-rho = 0
 
@@ -82,10 +83,11 @@ class path_follower:
         #calulate command outputs
         chi_c = var_phi + L*(np.pi/2.0 + atan(self.k_orbit*(d-rho)/rho))  #may need to change as shown on pg 183
         h_c = -cd
-        if d - rho == 0.0: ##should be smaller than a threshold?
+        if d == 0.0: #TODO should this be 0 or smaller than a threshold?
             phi_ff = orbit_phi
         else:
             phi_ff = 0.0
+        #TODO remove this, phi_ff = orbit_phi
             
         #package command outputs into message
         self.autopilot_commands.airspeed_command = path.airspeed
