@@ -15,7 +15,7 @@ from chap4.wind_simulation import wind_simulation
 from chap6.autopilot import autopilot
 from chap7.mav_dynamics import mav_dynamics
 from chap8.observer import observer
-# from chap10.path_follower import path_follower
+from chap10.path_follower import path_follower
 from chap10.path_viewer import path_viewer
 from tools.signals import signals ## for debugging
 
