@@ -38,7 +38,7 @@ path_follow = path_follower()
 from message_types.msg_path import msg_path
 path = msg_path()
 path.flag = 'line'
-#path.flag = 'orbit'
+# path.flag = 'orbit'
 if path.flag == 'line':
     path.line_origin = np.array([[0.0, 0.0, -100.0]]).T
     path.line_direction = np.array([[0.5, 1.0, 0.0]]).T
@@ -54,24 +54,26 @@ sim_time = SIM.start_time
 # main simulation loop
 print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
+
     #-------observer-------------
-    measurements = mav.sensors()  # get sensor measurements
+    mav.update_sensors() #I added, seems to be necessary
+    measurements = mav._sensors  # get sensor measurements
     estimated_state = obsv.update(measurements)  # estimate states from measurements
 
     #-------path follower-------------
     autopilot_commands = path_follow.update(path, estimated_state)
-    #autopilot_commands = path_follow.update(path, mav.true_state)  # for debugging
+    # autopilot_commands = path_follow.update(path, mav.msg_true_state) #for debugging
 
     #-------controller-------------
     delta, commanded_state = ctrl.update(autopilot_commands, estimated_state)
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector
-    mav.update(delta, current_wind)  # propagate the MAV dynamics
+    mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------
-    path_view.update(path, mav.true_state)  # plot path and MAV
-    data_view.update(mav.true_state, # true states
+    path_view.update(path, mav.msg_true_state)  # plot path and MAV
+    data_view.update(mav.msg_true_state, # true states
                      estimated_state, # estimated states
                      commanded_state, # commanded states
                      SIM.ts_simulation)
