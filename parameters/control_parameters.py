@@ -20,18 +20,18 @@ T_phi_delta_a, T_chi_phi, T_theta_delta_e, T_h_theta, T_h_Va, T_Va_delta_t, T_Va
 
 #Tuning parameters
 e_phi_max = 8.0 #degrees
-xsi_phi = 1.0
-tr_chi = 10
-xsi_chi = 0.707
+xsi_phi = 1.2
+tr_chi = 5.0
+xsi_chi = 2.0
 e_beta_max = 15 #degrees
 xsi_B = 0.707
-tr_th = 0.05
+tr_th = 0.147
 xsi_th = 0.4
-Wh = 20.0
-xsi_h = 0.7
+Wh = 50.0
+xsi_h = .707
 Wv2 = 10
 xsi_v = 0.707
-tr_v = 1
+tr_v = .1
 tau_r_yaw_damper = 0.5 #0.5 is from the root locus in the supplimental material
 kr_yaw_damper = 0.3 #I completely guessed on this
 

@@ -80,7 +80,3 @@ while sim_time < SIM.end_time:
     sim_time += SIM.ts_simulation
 
 if VIDEO == True: video.close()
-
-
-
-
