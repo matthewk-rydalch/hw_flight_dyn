@@ -52,7 +52,7 @@ class pi_control:
         self.integrator = self.integrator + (self.Ts/2) * (error + self.error_delay_1)
         self.error_delay_1 = error
 
-        u = self.kp * error + self.ki * error
+        u = self.kp * error + self.ki * self.integrator
 
         u_sat = self._saturate(u)
 

@@ -35,9 +35,9 @@ ctrl = autopilot(SIM.ts_simulation)
 # autopilot commands
 from message_types.msg_autopilot import msg_autopilot
 commands = msg_autopilot()
-Va_command = signals(dc_offset=25.0, amplitude=10.0, start_time=2.0, frequency = 0.02)
-h_command = signals(dc_offset=100.0, amplitude=20.0, start_time=0.0, frequency = 0.02)
-chi_command = signals(dc_offset=np.radians(0), amplitude=np.radians(200), start_time=5.0, frequency = 0.02)
+Va_command = signals(dc_offset=25.0, amplitude=3.0, start_time=2.0, frequency = 0.01)
+h_command = signals(dc_offset=100.0, amplitude=10.0, start_time=0.0, frequency = 0.02)
+chi_command = signals(dc_offset=np.radians(180), amplitude=np.radians(45), start_time=5.0, frequency = 0.015)
 
 # initialize the simulation time
 sim_time = SIM.start_time
@@ -57,7 +57,7 @@ while sim_time < SIM.end_time:
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector
-    current_wind = np.zeros((6, 1)) #get rid of this
+    # current_wind = np.zeros((6, 1)) #get rid of this
     input = np.array([[delta.item(0), delta.item(1), delta.item(2), delta.item(3)]]).T
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
@@ -73,7 +73,3 @@ while sim_time < SIM.end_time:
     sim_time += SIM.ts_simulation
 
 if VIDEO == True: video.close()
-
-
-
-
