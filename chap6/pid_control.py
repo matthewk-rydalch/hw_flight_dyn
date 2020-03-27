@@ -56,6 +56,10 @@ class pi_control:
 
         u_sat = self._saturate(u)
 
+        # integrator anti-windup
+        if not self.ki == 0:
+            self.integrator += self.Ts / self.ki * (u_sat - u)
+
         return u_sat
 
     def _saturate(self, u):
