@@ -57,12 +57,12 @@ class autopilot:
         delta_r = self.yaw_damper.update(state.r)
 
         # longitudinal autopilot
-        ## h_c = self.saturate(cmd.altitude_command, state.h-AP.altitude_zone, state.h+AP.altitude_zone)
-        h_c = cmd.altitude_command
+        h_c = self.saturate(cmd.altitude_command, state.h-AP.altitude_zone, state.h+AP.altitude_zone)
+        ##h_c = cmd.altitude_command
         theta_c = self.altitude_from_pitch.update(h_c, state.h)
         delta_e = self.pitch_from_elevator.update(theta_c, state.theta, state.q)
-        ## delta_t = self.saturate(self.airspeed_from_throttle.update(cmd.airspeed_command, state.Va), 0, 1)
-        delta_t = self.airspeed_from_throttle.update(cmd.airspeed_command, state.Va)
+        delta_t = self.saturate(self.airspeed_from_throttle.update(cmd.airspeed_command, state.Va), 0, 1)
+        ## delta_t = self.airspeed_from_throttle.update(cmd.airspeed_command, state.Va)
         # construct output and commanded states
         delta = np.array([[delta_a], [delta_e], [delta_r], [delta_t]])
 

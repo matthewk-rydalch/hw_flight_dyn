@@ -57,7 +57,7 @@ while sim_time < SIM.end_time:
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector
-    # current_wind = np.zeros((6, 1)) #get rid of this
+    current_wind = np.zeros((6, 1)) #get rid of this
     input = np.array([[delta.item(0), delta.item(1), delta.item(2), delta.item(3)]]).T
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
