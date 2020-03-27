@@ -30,8 +30,8 @@ xsi_th = 0.4
 Wh = 25.0
 xsi_h = 0.7
 Wv2 = 10
-xsi_v = 0.707
-tr_v = 1
+xsi_v = 1.3
+tr_v = .2
 tau_r_yaw_damper = 0.5 #0.5 is from the root locus in the supplimental material
 kr_yaw_damper = 0.3 #I completely guessed on this
 
