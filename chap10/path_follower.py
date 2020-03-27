@@ -8,9 +8,9 @@ from message_types.msg_autopilot import msg_autopilot
 class path_follower:
     def __init__(self):
         ## tuning parameters?
-        self.chi_inf = 1.0  # approach angle for large distance from straight-line path
-        self.k_path = 0.1  # proportional gain for straight-line path following
-        self.k_orbit = 10.0  # proportional gain for orbit following
+        self.chi_inf = 1.2  # approach angle for large distance from straight-line path
+        self.k_path = 0.3  # proportional gain for straight-line path following
+        self.k_orbit = 15.0  # proportional gain for orbit following
         self.gravity = 9.8
         self.autopilot_commands = msg_autopilot()  # message sent to autopilot
 
@@ -22,7 +22,7 @@ class path_follower:
         return self.autopilot_commands
 
     def _follow_straight_line(self, path, state):
-        
+
         #extract needed parameters
         r = path.line_origin
         q = path.line_direction
@@ -54,7 +54,7 @@ class path_follower:
         self.autopilot_commands.airspeed_command = path.airspeed
         self.autopilot_commands.course_command = chi_c
         self.autopilot_commands.altitude_command = h_c
-        self.autopilot_commands.phi_feedforward = 0.0 #for straight line 
+        self.autopilot_commands.phi_feedforward = 0.0 #for straight line
 
     def _follow_orbit(self, path, state):
 
@@ -86,7 +86,7 @@ class path_follower:
             phi_ff = orbit_phi
         else:
             phi_ff = 0.0
-            
+
         #package command outputs into message
         self.autopilot_commands.airspeed_command = path.airspeed
         self.autopilot_commands.course_command = chi_c
@@ -100,4 +100,3 @@ class path_follower:
         while th1-th2 < -np.pi:
             th1 = th1 + 2.0 * np.pi
         return th1
-

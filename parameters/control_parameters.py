@@ -21,8 +21,8 @@ T_phi_delta_a, T_chi_phi, T_theta_delta_e, T_h_theta, T_h_Va, T_Va_delta_t, T_Va
 #Tuning parameters
 e_phi_max = 8.0 #degrees
 xsi_phi = 1.2
-tr_chi = 1.0
-xsi_chi = 1.0
+tr_chi = 5.0
+xsi_chi = 2.0
 e_beta_max = 15 #degrees
 xsi_B = 0.707
 tr_th = 0.147

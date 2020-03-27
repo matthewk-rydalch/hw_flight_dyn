@@ -69,6 +69,7 @@ while sim_time < SIM.end_time:
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector
+    # current_wind = np.array([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]).T
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------
@@ -83,7 +84,3 @@ while sim_time < SIM.end_time:
     sim_time += SIM.ts_simulation
 
 if VIDEO == True: video.close()
-
-
-
-
