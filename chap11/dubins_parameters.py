@@ -35,21 +35,22 @@ class dubins_parameters:
             print('Error in Dubins Parameters: The distance between nodes must be larger than 2R.')
         else:
 
-            self.p_s =
-            self.chi_s =
-            self.p_e =
-            self.chi_e =
-            self.radius =
-            self.length =
-            self.center_s =
-            self.dir_s =
-            self.center_e =
-            self.dir_e =
-            self.r1 =
-            self.n1 =
-            self.r2 =
-            self.r3 =
-            self.n3 =
+            #TODO get these values
+            self.p_s = 1 #just set to one so things don't break
+            # self.chi_s =
+            # self.p_e =
+            # self.chi_e =
+            # self.radius =
+            # self.length =
+            # self.center_s =
+            # self.dir_s =
+            # self.center_e =
+            # self.dir_e =
+            # self.r1 =
+            # self.n1 =
+            # self.r2 =
+            # self.r3 =
+            # self.n3 =
 
 
 def rotz(theta):
