@@ -40,15 +40,15 @@ path_manage = path_manager()
 # waypoint definition
 from message_types.msg_waypoints import msg_waypoints
 waypoints = msg_waypoints()
-waypoints.type = 'straight_line'
-#waypoints.type = 'fillet'
+# waypoints.type = 'straight_line'
+waypoints.type = 'fillet'
 # waypoints.type = 'dubins'
 waypoints.num_waypoints = 4
 Va = PLAN.Va0
 waypoints.ned = np.array([[0, 0, -100],
-                [300, 0, -100],
-                [0, 300, -100],
-                [300, 300, -100]]).T
+                [1000, 0, -100],
+                [0, 1000, -100],
+                [1000, 1000, -100]]).T
 waypoints.airspeed[:, 0:waypoints.num_waypoints] \
     = np.array([[Va, Va, Va, Va]])
 waypoints.course[:, 0:waypoints.num_waypoints] \

@@ -217,9 +217,9 @@ class waypoint_viewer():
             self.path.setData(pos=points,color=path_color)
 
     def straight_line_points(self, path):
-        points = np.array([[path.line_origin.item(0),
-                            path.line_origin.item(1),
-                            path.line_origin.item(2)],
+        points = np.array([[path.line_origin.item(0) - self.scale * path.line_direction.item(0),
+                            path.line_origin.item(1) - self.scale * path.line_direction.item(1),
+                            path.line_origin.item(2) - self.scale * path.line_direction.item(2)],
                            [path.line_origin.item(0) + self.scale * path.line_direction.item(0),
                             path.line_origin.item(1) + self.scale * path.line_direction.item(1),
                             path.line_origin.item(2) + self.scale * path.line_direction.item(2)]])
