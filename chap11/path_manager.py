@@ -38,6 +38,7 @@ class path_manager:
                 self.dubins_manager(waypoints, radius, state)
             else:
                 print('Error in Path Manager: Undefined waypoint type.')
+
         return self.path
 
     def line_manager(self, waypoints, state):
@@ -61,12 +62,16 @@ class path_manager:
         self.halfspace_n = (qi_p+qi)/np.linalg.norm(qi_p+qi) #normal to half plane
 
         if self.inHalfSpace(p):
+            print('in half space')
             self.increment_pointers(waypoints.num_waypoints)
 
         r = self.halfspace_r
         q = qi_p
-        return (r, q)
+        self.path.line_origin = np.array([r]).T
+        self.path.line_direction = np.array([q]).T
 
+        #Tell waypoint_viewer to replot the path
+        self.path.flag_path_changed = True
 
     # def fillet_manager(self, waypoints, radius, state):
 

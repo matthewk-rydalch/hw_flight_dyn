@@ -213,8 +213,8 @@ class waypoint_viewer():
         else:
             self.path.setData(pos=points)
             #TODO need to get the path color and path updated to get the animation of the circles to work
-            #path_color = np.tile(red, (points.shape[0],1)) #this is Landon's code
-            #self.path.setData(pos=points,color=path_color)
+            path_color = np.tile(red, (points.shape[0],1)) #this is Landon's code
+            self.path.setData(pos=points,color=path_color)
 
     def straight_line_points(self, path):
         points = np.array([[path.line_origin.item(0),

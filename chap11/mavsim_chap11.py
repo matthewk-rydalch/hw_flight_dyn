@@ -46,9 +46,9 @@ waypoints.type = 'straight_line'
 waypoints.num_waypoints = 4
 Va = PLAN.Va0
 waypoints.ned = np.array([[0, 0, -100],
-                [1000, 0, -100],
-                [0, 1000, -100],
-                [1000, 1000, -100]]).T
+                [300, 0, -100],
+                [0, 300, -100],
+                [300, 300, -100]]).T
 waypoints.airspeed[:, 0:waypoints.num_waypoints] \
     = np.array([[Va, Va, Va, Va]])
 waypoints.course[:, 0:waypoints.num_waypoints] \
@@ -79,6 +79,7 @@ while sim_time < SIM.end_time:
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector
+    current_wind = np.zeros((6,1))
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------
