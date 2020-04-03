@@ -57,14 +57,14 @@ class path_manager:
         i = self.ptr_current
         i_n = self.ptr_next
 
-        self.halfspace_r = w[i] #TODO point on half plane?  Dr. Beard said it is a point on the line before wi, but I feel like this only makes sense how I have it.
+        self.halfspace_r = np.array([w[i]]).T #TODO point on half plane?  Dr. Beard said it is a point on the line before wi, but I feel like this only makes sense how I have it.
         qi_p = (w[i]-w[i_p])/np.linalg.norm(w[i]-w[i_p])
         qi = (w[i_n]-w[i])/np.linalg.norm(w[i_n]-w[i])
-        self.halfspace_n = (qi_p+qi)/np.linalg.norm(qi_p+qi) #normal to half plane
+        self.halfspace_n = np.array([(qi_p+qi)/np.linalg.norm(qi_p+qi)]).T #normal to half plane
 
         r = self.halfspace_r
         q = qi_p
-        self.path.line_origin = np.array([r]).T
+        self.path.line_origin = r
         self.path.line_direction = np.array([q]).T
 
         #Tell waypoint viewer to replot the path
@@ -104,8 +104,8 @@ class path_manager:
             r = w[i]
             q = qi_p
             z = w[i] - R/np.tan(ro_var/2.0)*qi_p
-            self.halfspace_r = z
-            self.halfspace_n = qi_p
+            self.halfspace_r = np.array([z]).T
+            self.halfspace_n = np.array([qi_p]).T
 
             #set the path for path follower
             self.path.line_origin = np.array([r]).T
@@ -131,8 +131,8 @@ class path_manager:
             #calculate variables
             L = np.sign(qi_p[0]*qi[1]-qi_p[1]*qi[0])
             z = w[i] + R/np.tan(ro_var/2.0)*qi
-            self.halfspace_r = z
-            self.halfspace_n = qi
+            self.halfspace_r = np.array([z]).T
+            self.halfspace_n = np.array([qi]).T
 
             #set path parameters for path follower
             self.path.orbit_center = np.array([c]).T
