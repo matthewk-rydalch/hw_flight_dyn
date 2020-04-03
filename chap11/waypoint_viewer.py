@@ -274,12 +274,13 @@ class waypoint_viewer():
     def dubins_points(self, waypoints, radius, Del):
         initialize_points = True
         for j in range(0, waypoints.num_waypoints-1):
-            self.dubins_path.update(
-                waypoints.ned[:, j:j+1],
-                waypoints.course.item(j),
-                waypoints.ned[:, j+1:j+2],
-                waypoints.course.item(j+1),
-                radius)
+            # TODO Is it right to comment this out?
+        #     self.dubins_path.update(
+        #         waypoints.ned[:, j:j+1],
+        #         waypoints.course.item(j),
+        #         waypoints.ned[:, j+1:j+2],
+        #         waypoints.course.item(j+1),
+        #         radius)
 
             # points along start circle
             th1 = np.arctan2(self.dubins_path.p_s.item(1) - self.dubins_path.center_s.item(1),
