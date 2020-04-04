@@ -194,8 +194,8 @@ class path_manager:
                 self.path.flag_path_changed = True
                 self.flag_path_changed = False
             if self.inHalfSpace(p):
-                print('in half space')
                 self.manager_state = 2
+                print('state = ', self.manager_state)
                 self.flag_path_changed = True  # Flag to indicate the path will change on next iteration and needs to be plotted.
 
         #end first orbit
@@ -210,15 +210,15 @@ class path_manager:
                 self.path.flag_path_changed = True
                 self.flag_path_changed = False
             if self.inHalfSpace(p):
-                print('in half space')
                 self.manager_state = 3
+                print('state = ', self.manager_state)
                 self.flag_path_changed = True  # Flag to indicate the path will change on next iteration and needs to be plotted.
 
         #straight line path
         elif self.manager_state == 3:
             self.path.flag = 'line'
 
-            r = self.dubins_path.r1 #TODO should these be different? r2?
+            r = self.dubins_path.r2 #TODO should these be different? r2?
             q = self.dubins_path.n1
             #set the path for path follower
             self.path.line_origin = r
@@ -234,55 +234,58 @@ class path_manager:
                 self.path.flag_path_changed = True
                 self.flag_path_changed = False
             if self.inHalfSpace(p):
-                print('in half space')
                 self.manager_state = 4
+                print('state = ', self.manager_state)
                 self.flag_path_changed = True  # Flag to indicate the path will change on next iteration and needs to be plotted.
 
-            # Start 2nd orbit path
-            elif self.manager_state == 4:
-                # get parameters
-                self.path.flag = 'orbit'
-                c = self.dubins_path.center_e
-                ro = R
-                L = self.dubins_path.dir_e
+        # Start 2nd orbit path
+        elif self.manager_state == 4:
+            # get parameters
+            self.path.flag = 'orbit'
+            c = self.dubins_path.center_e
+            ro = R
+            L = self.dubins_path.dir_e
 
-                # set path parameters for path follower
-                self.path.orbit_center = c
-                self.path.orbit_direction = L
-                self.path.orbit_radius = ro
+            # set path parameters for path follower
+            self.path.orbit_center = c
+            self.path.orbit_direction = L
+            self.path.orbit_radius = ro
 
-                self.halfspace_r = self.dubins_path.r3
-                self.halfspace_n = -self.dubins_path.n3
+            self.halfspace_r = self.dubins_path.r3
+            self.halfspace_n = self.dubins_path.n3
 
-                # check if in half space &
-                # Tell waypoint viewer to replot the path
-                if self.flag_path_changed:
-                    self.path.flag_path_changed = True
-                    self.flag_path_changed = False
-                if self.inHalfSpace(p):
-                    print('in half space')
-                    self.manager_state = 5
-                    self.flag_path_changed = True  # Flag to indicate the path will change on next iteration
+            # check if in half space &
+            # Tell waypoint viewer to replot the path
+            if self.flag_path_changed:
+                self.path.flag_path_changed = True
+                self.flag_path_changed = False
+            if self.inHalfSpace(p):
+                self.manager_state = 5
+                print('state = ', self.manager_state)
+                self.flag_path_changed = True  # Flag to indicate the path will change on next iteration
 
-            # outgoing 2nd orbit path
-            elif self.manager_state == 5:
-                # get parameters
-                self.path.flag = 'line'
+        # outgoing 2nd orbit path
+        elif self.manager_state == 5:
+            # get parameters
+            self.path.flag = 'line'
 
-                self.halfspace_r = self.dubins_path.r3
-                self.halfspace_n = self.dubins_path.n3
+            self.halfspace_r = self.dubins_path.r3
+            self.halfspace_n = self.dubins_path.n3
 
-                # check if in half space &
-                # Tell waypoint viewer to replot the path
-                if self.flag_path_changed:
-                    self.path.flag_path_changed = True
-                    self.flag_path_changed = False
-                if self.inHalfSpace(p):
-                    print('in half space')
-                    self.manager_state = 1
-                    self.flag_path_changed = True  # Flag to indicate the path will change on next iteration
-                    self.increment_pointers(waypoints.num_waypoints)
-                    self.dubins_path(w[i_p], chi[i_p], w[i], chi[i], R)
+            # check if in half space &
+            # Tell waypoint viewer to replot the path
+            if self.flag_path_changed:
+                self.path.flag_path_changed = True
+                self.flag_path_changed = False
+            if self.inHalfSpace(p):
+                self.manager_state = 1
+                print('state = ', self.manager_state)
+                self.flag_path_changed = True  # Flag to indicate the path will change on next iteration
+                self.increment_pointers(waypoints.num_waypoints)
+                self.dubins_path.update(w[i_p], chi[i_p][0], w[i], chi[i][0], R)
+
+            self.path.line_origin = self.dubins_path.r3
+            self.path.line_direction = self.dubins_path.n3
 
     def initialize_pointers(self):
         self.ptr_previous = 0

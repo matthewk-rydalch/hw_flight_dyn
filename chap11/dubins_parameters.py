@@ -71,7 +71,7 @@ class dubins_parameters:
             cs = cl_s
             Ls = -1
             ce = cr_e
-            Le = -1
+            Le = 1
 
             q1 = Rz(th1 + th2 - np.pi / 2.0) @ e1
             z1 = cs + R * Rz(th1 + th2) @ e1
@@ -89,7 +89,7 @@ class dubins_parameters:
         else:
             print("invalid min index value")
 
-        z3 = p_e
+        z3 = np.array([p_e]).T
         q3 = Rz(chi_e)@e1
 
         self.p_s = p_s
@@ -160,10 +160,12 @@ def Rz(theta):
 
 def wrap(x):
     # make x between 0 and 2*pi
-    while x < 0:
-        x += 2*np.pi
-    while x > 2*np.pi:
-        x -= 2*np.pi
+    th = 2*np.pi
+    th2 = th - 2*np.pi
+    while x < th2:
+        x += th
+    while x > th:
+        x -= th
     return x
 
 
