@@ -194,6 +194,7 @@ class path_manager:
                 self.path.flag_path_changed = True
                 self.flag_path_changed = False
             if self.inHalfSpace(p):
+                print('state 1, orbit direction = ', self.path.orbit_direction)
                 self.manager_state = 2
                 print('state = ', self.manager_state)
                 self.flag_path_changed = True  # Flag to indicate the path will change on next iteration and needs to be plotted.
@@ -210,6 +211,7 @@ class path_manager:
                 self.path.flag_path_changed = True
                 self.flag_path_changed = False
             if self.inHalfSpace(p):
+                print('state 2, orbit direction = ', self.path.orbit_direction)
                 self.manager_state = 3
                 print('state = ', self.manager_state)
                 self.flag_path_changed = True  # Flag to indicate the path will change on next iteration and needs to be plotted.
@@ -234,6 +236,7 @@ class path_manager:
                 self.path.flag_path_changed = True
                 self.flag_path_changed = False
             if self.inHalfSpace(p):
+                print('state 3, orbit direction = ', self.path.orbit_direction)
                 self.manager_state = 4
                 print('state = ', self.manager_state)
                 self.flag_path_changed = True  # Flag to indicate the path will change on next iteration and needs to be plotted.
@@ -260,6 +263,7 @@ class path_manager:
                 self.path.flag_path_changed = True
                 self.flag_path_changed = False
             if self.inHalfSpace(p):
+                print('state 4, orbit direction = ', self.path.orbit_direction)
                 self.manager_state = 5
                 print('state = ', self.manager_state)
                 self.flag_path_changed = True  # Flag to indicate the path will change on next iteration
@@ -278,6 +282,7 @@ class path_manager:
                 self.path.flag_path_changed = True
                 self.flag_path_changed = False
             if self.inHalfSpace(p):
+                print('state 5, orbit direction = ', self.path.orbit_direction)
                 self.manager_state = 1
                 print('state = ', self.manager_state)
                 self.flag_path_changed = True  # Flag to indicate the path will change on next iteration

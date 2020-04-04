@@ -70,6 +70,7 @@ class observer:
         self.estimated_state.bx = 0.0
         self.estimated_state.by = 0.0
         self.estimated_state.bz = 0.0
+
         return self.estimated_state
 
 class alpha_filter:
@@ -144,7 +145,7 @@ class ekf_attitude:
             # update P with continuous time model
             # self.P = self.P + Tp * (A @ self.P + self.P @ A.T + self.Q + G @ self.Q_gyro @ G.T)
             ## convert to discrete time models
-            A_d = np.identity(2) + A*Tp + A@A*Tp**2
+            A_d = np.identity(2) + A*Tp + A@A*Tp**2/2.0 #TODO should /2.0 stay?  It comes from Hayden
 
             self.P = A_d@self.P@A_d.T + Tp**2 * (G@self.Q_gyro@G.T + self.Q)
 
@@ -268,7 +269,7 @@ class ekf_position:
             # update P with continuous time model
             # self.P = self.P + self.Ts * (A @ self.P + self.P @ A.T + self.Q + G @ self.Q @ G.T)
             # convert to discrete time models
-            A_d = np.identity(7) + A*Tp + A@A*Tp**2
+            A_d = np.identity(7) + A*Tp + A@A*Tp**2/2.0 #TODO should the /2.0 stay?  It came from Hayden
             # update P with discrete time model
             self.P = A_d@self.P@A_d.T + Tp**2*self.Q
 
