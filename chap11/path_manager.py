@@ -24,7 +24,6 @@ class path_manager:
         self.new_waypoint_path = True #I added
         self.flag_path_changed = False #I added
 
-    # def update(self, waypoints, radius, state): #TODO Why is this a function in a funtion?
     def update(self, waypoints, radius, state):
         # this flag is set for one time step to signal a redraw in the viewer
         if self.path.flag_path_changed == True:
@@ -57,7 +56,7 @@ class path_manager:
         i = self.ptr_current
         i_n = self.ptr_next
 
-        self.halfspace_r = np.array([w[i]]).T #TODO point on half plane?  Dr. Beard said it is a point on the line before wi, but I feel like this only makes sense how I have it.
+        self.halfspace_r = np.array([w[i]]).T # Point on half plane?  Dr. Beard said it is a point on the line before wi, but I feel like this only makes sense how I have it.
         qi_p = (w[i]-w[i_p])/np.linalg.norm(w[i]-w[i_p])
         qi = (w[i_n]-w[i])/np.linalg.norm(w[i_n]-w[i])
         self.halfspace_n = np.array([(qi_p+qi)/np.linalg.norm(qi_p+qi)]).T #normal to half plane
@@ -170,8 +169,7 @@ class path_manager:
             self.manager_state = 1
 
         #find dubins parameters
-        self.dubins_path.update(w[i_p], chi[i_p][0], w[i], chi[i][0], R) #TODO fix this dubins set up
-
+        self.dubins_path.update(w[i_p], chi[i_p][0], w[i], chi[i][0], R)
         # Incoming Orbit path
         if self.manager_state == 1:
             # get variables
@@ -220,13 +218,13 @@ class path_manager:
         elif self.manager_state == 3:
             self.path.flag = 'line'
 
-            r = self.dubins_path.r2 #TODO should these be different? r2?
+            r = self.dubins_path.r2
             q = self.dubins_path.n1
             #set the path for path follower
             self.path.line_origin = r
             self.path.line_direction = q
 
-            self.halfspace_r = r #TODO are these right?
+            self.halfspace_r = r
             self.halfspace_n = q
 
 

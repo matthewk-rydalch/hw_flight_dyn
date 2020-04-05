@@ -46,7 +46,7 @@ waypoints.type = 'dubins'
 waypoints.num_waypoints = 4
 Va = PLAN.Va0
 waypoints.ned = np.array([[0, 0, -100],
-                [400, 0, -100],
+                [1000, 0, -100],
                 [0, 1000, -100],
                 [1000, 1000, -100]]).T
 waypoints.airspeed[:, 0:waypoints.num_waypoints] \
