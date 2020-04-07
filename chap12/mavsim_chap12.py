@@ -19,10 +19,12 @@ from chap10.path_follower import path_follower
 from chap11.path_manager import path_manager
 from chap12.world_viewer import world_viewer
 from chap12.path_planner import path_planner
+from chap11.waypoint_viewer import waypoint_viewer #TODO for debugging
 
 # initialize the visualization
 VIDEO = False  # True==write video, False==don't write video
 world_view = world_viewer()  # initialize the viewer
+# waypoint_view = waypoint_viewer() #TODO for debugging
 data_view = data_viewer()  # initialize view of data plots
 if VIDEO == True:
     from chap2.video_writer import video_writer
@@ -74,6 +76,7 @@ while sim_time < SIM.end_time:
 
     #-------update viewer-------------
     world_view.update(map, waypoints, path, mav.msg_true_state)  # plot path and MAV
+    # waypoint_view.update(waypoints, path, mav.msg_true_state)  #TODO for debugging
     data_view.update(mav.msg_true_state, # true states
                      estimated_state, # estimated states
                      commanded_state, # commanded states
