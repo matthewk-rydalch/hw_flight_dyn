@@ -9,7 +9,7 @@ class path_follower:
     def __init__(self):
         ## tuning parameters?
         self.chi_inf = 1.2  # approach angle for large distance from straight-line path
-        self.k_path = 0.3  # proportional gain for straight-line path following
+        self.k_path = 0.05  # proportional gain for straight-line path following
         self.k_orbit = 15.0  # proportional gain for orbit following
         self.gravity = 9.8
         self.autopilot_commands = msg_autopilot()  # message sent to autopilot
@@ -67,10 +67,12 @@ class path_follower:
         ce = c[1][0]
         cd = c[2][0]
         rho = path.orbit_radius
-        if path.orbit_direction == 'CW':
-            L = 1
-        else:
-            L = -1
+        #TODO fix these inputs in mavsim_chap10.py
+        # if path.orbit_direction == 'CW':
+        #     L = 1
+        # else:
+        #     L = -1
+        L = path.orbit_direction
         g = 9.81
         phi_ff = 0.0 #can be changed below in command outputs if d-rho = 0
 

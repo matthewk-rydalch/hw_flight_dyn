@@ -197,9 +197,9 @@ class waypoint_viewer():
 
     def drawPath(self, path):
         red = np.array([[1., 0., 0., 1]])
-        if path.type == 'line':
+        if path.flag == 'line':
             points = self.straight_line_points(path)
-        elif path.type == 'orbit':
+        elif path.flag == 'orbit':
             points = self.orbit_points(path)
         if not self.plot_initialized:
             path_color = np.tile(red, (points.shape[0], 1))
@@ -212,11 +212,14 @@ class waypoint_viewer():
             self.window.addItem(self.path)
         else:
             self.path.setData(pos=points)
+            #TODO need to get the path color and path updated to get the animation of the circles to work
+            path_color = np.tile(red, (points.shape[0],1)) #this is Landon's code
+            self.path.setData(pos=points,color=path_color)
 
     def straight_line_points(self, path):
-        points = np.array([[path.line_origin.item(0),
-                            path.line_origin.item(1),
-                            path.line_origin.item(2)],
+        points = np.array([[path.line_origin.item(0) - self.scale * path.line_direction.item(0),
+                            path.line_origin.item(1) - self.scale * path.line_direction.item(1),
+                            path.line_origin.item(2) - self.scale * path.line_direction.item(2)],
                            [path.line_origin.item(0) + self.scale * path.line_direction.item(0),
                             path.line_origin.item(1) + self.scale * path.line_direction.item(1),
                             path.line_origin.item(2) + self.scale * path.line_direction.item(2)]])
@@ -271,10 +274,11 @@ class waypoint_viewer():
     def dubins_points(self, waypoints, radius, Del):
         initialize_points = True
         for j in range(0, waypoints.num_waypoints-1):
+            # TODO Is it right to comment this out?
             self.dubins_path.update(
-                waypoints.ned[:, j:j+1],
+                waypoints.ned[:, j:j+1].T[0],
                 waypoints.course.item(j),
-                waypoints.ned[:, j+1:j+2],
+                waypoints.ned[:, j+1:j+2].T[0],
                 waypoints.course.item(j+1),
                 radius)
 

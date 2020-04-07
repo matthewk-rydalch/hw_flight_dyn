@@ -47,6 +47,7 @@ class mav_dynamics:
         self._forces = np.array([[0.], [0.], [0.]])
         self._Va = MAV.Va0
         self.Va_b = np.array([[0.], [0.], [0.]])
+        self.Vg_b = np.array([[0.], [0.], [0.]])
         self._Vg = MAV.Va0
         self.Vg_i = np.array([[MAV.u0, MAV.v0, MAV.w0]]).T
         self._alpha = 0
@@ -70,7 +71,7 @@ class mav_dynamics:
         '''
        delta = (delta_a, delta_e, delta_r, delta_t) are the control inputs
         '''
-
+        self._wind = wind
         # get forces and moments acting on rigid body
         forces_moments = self._forces_moments(delta)
 
@@ -245,17 +246,17 @@ class mav_dynamics:
 
         # compute airspeed
         wind_constant = Euler2Rotation(phi, th, psi) @ wind[0:3]
-        self._wind = np.array([[wind_constant[0][0] + wind[3][0]],
+        wind_b = np.array([[wind_constant[0][0] + wind[3][0]],
                                [wind_constant[1][0] + wind[4][0]],
                                [wind_constant[2][0] + wind[5][0]]])
-        self.Va_b = np.array([[self._state[3][0] - self._wind[0][0]],
-                              [self._state[4][0] - self._wind[1][0]],
-                              [self._state[5][0] - self._wind[2][0]]])
+        self.Va_b = np.array([[self._state[3][0] - wind_b[0][0]],
+                              [self._state[4][0] - wind_b[1][0]],
+                              [self._state[5][0] - wind_b[2][0]]])
 
         self._Va = np.linalg.norm(self.Va_b)
 
-        Vg_b = self.Va_b + self._wind
-        self._Vg = np.linalg.norm(Vg_b)
+        self.Vg_b = self.Va_b + wind_b
+        self._Vg = np.linalg.norm(self.Vg_b)
 
         if self._Va == 0.0:
             self._alpha = 0.0
@@ -445,9 +446,8 @@ class mav_dynamics:
         self.msg_true_state.psi = psi
 
         R = Euler2Rotation(phi, theta, psi)
-        Vg_b = self.Va_b + self._wind
-        self.Vg_i = R.T @ Vg_b
-        self.msg_true_state.Vg = np.linalg.norm(Vg_b)
+        self.Vg_i = R.T @ self.Vg_b
+        self.msg_true_state.Vg = self._Vg
         self.msg_true_state.gamma = np.arctan2(-self.Vg_i[2], np.sqrt(self.Vg_i[0] ** 2 + self.Vg_i[1] ** 2))
         self.msg_true_state.chi = -np.arctan2(self.Vg_i[1], self.Vg_i[0])[0]
         self.msg_true_state.p = self._state.item(10)
