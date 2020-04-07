@@ -6,6 +6,8 @@ class planRRT():
     def __init__(self, map):
         self.waypoints = msg_waypoints()
         self.segmentLength = 300 # standard length of path segments
+        #keep in mind the size of the buildings.  Right now they are 360 wide
+        self.min_distance = 250 # minimum distance from building center to path
 
     def planPath(self, wpp_start, wpp_end, map):
 
@@ -23,11 +25,11 @@ class planRRT():
         tree = start_node
 
         # check to see if start_node connects directly to end_node
-        if ((np.linalg.norm(start_node[0:3] - end_node[0:3]) < self.segmentLength ) and not self.collision(start_node, end_node, map)):
+        if ((np.linalg.norm(start_node[0:3] - end_node[0:3]) < self.segmentLength ) and not self.feasiblePath(start_node, end_node, map)):
             self.waypoints.ned = end_node[0:3]
         else:
             numPaths = 0
-            while numPaths < 3:
+            while numPaths < 3: #TODO only 3 complete paths required
                 tree, flag = self.extendTree(tree, end_node, self.segmentLength, map, pd)
                 numPaths = numPaths + flag
 
@@ -36,17 +38,62 @@ class planRRT():
         path = self.findMinimumPath(tree, end_node)
         return self.smoothPath(path, map)
 
-    def generateRandomNode(map, pd, chi):
+    # def generateRandomNode(self, map, pd, chi):
 
-    def collision(start_node, end_node, map):
+    def feasiblePath(self, start_node, end_node, map):
+        #get parameters
+        ps = np.array([start_node[0:3]]).T
+        pe = np.array([end_node[0:3]]).T
 
-    def pointsAlongPath(start_node, end_node, Del):
+        collision = self.collision(ps, pe, map)
+        # # fliable = self.fliable(): #TODO add this function
+        #
+        # if fliable and not collision:
+        #     return true
+        # return false
+        return collision
 
-    def downAtNE(map, n, e):
+    def collision(self, ps, pe, map):
 
-    def extendTree(tree, end_node, segmentLength, map, pd):
+        #get parameters
+        Del = self.min_distance #min distance between line and building (diameter from each segment point of the path)
+        vec = pe - ps
+        len = np.linalg.norm(vec)
 
-    def findMinimumPath(tree, end_node):
+        close_buildings = []
+        for i in range(map.num_city_blocks):
+            for j in range(map.num_city_blocks):
+                building = np.array([[map.building_north[i], map.building_east[j], map.building_height[i][j]]]).T
+                if np.linalg.norm(building - ps) <= len/2.0 or np.linalg.norm(building - pe) <= len/2.0:
+                    close_buildings.append(building)
 
-    def smoothPath(path, map):
+        # get points along path and check them
+        collision = self.pointsAlongPath(ps, pe, Del, vec, len, close_buildings)
+
+        return collision
+
+    def pointsAlongPath(self, ps, pe, Del, vec, len, close_buildings):
+
+        dir = vec/len
+
+        #initialize first point
+        i = 0
+        point = ps + Del*dir
+        while np.linalg.norm(point - ps) <= len:
+            for building in close_buildings:
+                if np.linalg.norm(building - point) <= Del:
+                    return True
+
+            point = point + Del*dir
+
+        return False
+
+
+    # def downAtNE(self, map, n, e):
+
+    # def extendTree(self, tree, end_node, segmentLength, map, pd):
+
+    # def findMinimumPath(self, tree, end_node):
+
+    # def smoothPath(self, path, map):
 
