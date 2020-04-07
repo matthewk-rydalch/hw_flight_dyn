@@ -71,7 +71,6 @@ class path_manager:
             self.path.flag_path_changed = True
             self.flag_path_changed = False
         if self.inHalfSpace(p):
-            print('in half space')
             self.increment_pointers(waypoints.num_waypoints)
             self.flag_path_changed = True #Flag to indicate the path will change on next iteration and needs to be plotted.
 
@@ -116,7 +115,6 @@ class path_manager:
                 self.path.flag_path_changed = True
                 self.flag_path_changed = False
             if self.inHalfSpace(p):
-                print('in half space')
                 self.manager_state = 2
                 self.flag_path_changed = True  #Flag to indicate the path will change on next iteration and needs to be plotted.
 
@@ -144,7 +142,6 @@ class path_manager:
                 self.path.flag_path_changed = True
                 self.flag_path_changed = False
             if self.inHalfSpace(p):
-                print('in half space')
                 self.increment_pointers(waypoints.num_waypoints)
                 self.manager_state = 1
                 self.flag_path_changed = True  #Flag to indicate the path will change on next iteration and needs to be plotted.
@@ -192,9 +189,7 @@ class path_manager:
                 self.path.flag_path_changed = True
                 self.flag_path_changed = False
             if self.inHalfSpace(p):
-                print('state 1, orbit direction = ', self.path.orbit_direction)
                 self.manager_state = 2
-                print('state = ', self.manager_state)
                 self.flag_path_changed = True  # Flag to indicate the path will change on next iteration and needs to be plotted.
 
         #end first orbit
@@ -209,9 +204,7 @@ class path_manager:
                 self.path.flag_path_changed = True
                 self.flag_path_changed = False
             if self.inHalfSpace(p):
-                print('state 2, orbit direction = ', self.path.orbit_direction)
                 self.manager_state = 3
-                print('state = ', self.manager_state)
                 self.flag_path_changed = True  # Flag to indicate the path will change on next iteration and needs to be plotted.
 
         #straight line path
@@ -234,9 +227,7 @@ class path_manager:
                 self.path.flag_path_changed = True
                 self.flag_path_changed = False
             if self.inHalfSpace(p):
-                print('state 3, orbit direction = ', self.path.orbit_direction)
                 self.manager_state = 4
-                print('state = ', self.manager_state)
                 self.flag_path_changed = True  # Flag to indicate the path will change on next iteration and needs to be plotted.
 
         # Start 2nd orbit path
@@ -261,9 +252,7 @@ class path_manager:
                 self.path.flag_path_changed = True
                 self.flag_path_changed = False
             if self.inHalfSpace(p):
-                print('state 4, orbit direction = ', self.path.orbit_direction)
                 self.manager_state = 5
-                print('state = ', self.manager_state)
                 self.flag_path_changed = True  # Flag to indicate the path will change on next iteration
 
         # outgoing 2nd orbit path
@@ -280,9 +269,7 @@ class path_manager:
                 self.path.flag_path_changed = True
                 self.flag_path_changed = False
             if self.inHalfSpace(p):
-                print('state 5, orbit direction = ', self.path.orbit_direction)
                 self.manager_state = 1
-                print('state = ', self.manager_state)
                 self.flag_path_changed = True  # Flag to indicate the path will change on next iteration
                 self.increment_pointers(waypoints.num_waypoints)
                 self.dubins_path.update(w[i_p], chi[i_p][0], w[i], chi[i][0], R)

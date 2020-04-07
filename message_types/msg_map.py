@@ -26,6 +26,6 @@ class msg_map:
             # an array of the north corner of buildings
             self.building_north = np.zeros(PLAN.num_blocks)
             for i in range(0, PLAN.num_blocks):
-                self.building_north[i] = 0.5*PLAN.city_width/PLAN.num_blocks*(2*(i)+1)
+                self.building_north[i] = 0.5*PLAN.city_width/PLAN.num_blocks*(2*(i)+1) #Can use to center the map - 1800
             # an array of the east corner of buildings
             self.building_east = self.building_north
