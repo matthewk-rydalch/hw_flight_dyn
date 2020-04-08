@@ -19,6 +19,9 @@ from chap10.path_follower import path_follower
 from chap11.path_manager import path_manager
 from chap11.waypoint_viewer import waypoint_viewer
 
+waypoint_view = waypoint_viewer()  # initialize the viewer
+data_view = data_viewer()  # initialize view of data plots
+
 # initialize elements of the architecture
 wind = wind_simulation(SIM.ts_simulation)
 mav = mav_dynamics(SIM.ts_simulation)
@@ -30,19 +33,14 @@ path_manage = path_manager()
 # waypoint definition
 from message_types.msg_waypoints import msg_waypoints
 waypoints = msg_waypoints()
-# waypoints.type = 'straight_line'
-# waypoints.type = 'fillet'
-waypoints.type = 'dubins'
-waypoints.num_waypoints = 4
+waypoints.type = 'straight_line'
+waypoints.num_waypoints = 3
 Va = PLAN.Va0
 waypoints.ned = np.array([[0, 0, -100],
                 [1000, 0, -100],
-                [0, 1000, -100],
                 [1000, 1000, -100]]).T
-waypoints.airspeed[:, 0:waypoints.num_waypoints] \
-    = np.array([[Va, Va, Va, Va]])
+waypoints.airspeed = np.array([[Va, Va, Va]])
 waypoints.course = np.array([[np.radians(0),
-                 np.radians(45),
                  np.radians(45),
                  np.radians(-135)]]).T
 
