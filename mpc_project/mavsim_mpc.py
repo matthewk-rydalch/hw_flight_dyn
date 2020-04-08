@@ -16,7 +16,7 @@ from chap7.mav_dynamics import mav_dynamics
 from chap8.observer import observer
 from chap10.path_follower import path_follower
 from chap10.path_viewer import path_viewer
-from mpc.mpc import mpc_manager
+from mpc_project.mpc_manager import mpc_manager
 
 # initialize the visualization
 path_view = path_viewer()  # initialize the viewer
@@ -43,7 +43,7 @@ while sim_time < SIM.end_time:
     estimated_state = obsv.update(measurements)  # estimate states from measurements
 
     #-------MPC-------------------
-    path = mpc.update(estimated_state)
+    path = mpc.update()#(estimated_state)
 
     #-------path follower-------------
     autopilot_commands = path_follow.update(path, estimated_state)

@@ -10,7 +10,7 @@ class mpc_manager():
         # message sent to path follower
         self.path = msg_path()
 
-    def update(self, waypoints, radius, state):
+    def update(self):
         self.path.flag = 'line'
         self.path.line_origin = np.array([[0.0, 0.0, -100.0]]).T
         self.path.line_direction = np.array([[0.5, 1.0, 0.0]]).T
