@@ -15,11 +15,11 @@ from chap6.autopilot import autopilot
 from chap7.mav_dynamics import mav_dynamics
 from chap8.observer import observer
 from chap10.path_follower import path_follower
-from chap10.path_viewer import path_viewer
+from mpc_project.waypoint_viewer import waypoint_viewer
 from mpc_project.mpc_manager import mpc_manager
 
 # initialize the visualization
-path_view = path_viewer()  # initialize the viewer
+waypoint_view = waypoint_viewer()  # initialize the viewer
 data_view = data_viewer()  # initialize view of data plots
 
 # initialize elements of the architecture
@@ -43,7 +43,7 @@ while sim_time < SIM.end_time:
     estimated_state = obsv.update(measurements)  # estimate states from measurements
 
     #-------MPC-------------------
-    path = mpc.update()#(estimated_state)
+    path = mpc.update(mav.msg_true_state) #TODO switch to estimated_state
 
     #-------path follower-------------
     autopilot_commands = path_follow.update(path, estimated_state)
@@ -58,7 +58,7 @@ while sim_time < SIM.end_time:
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------
-    path_view.update(path, mav.msg_true_state)  # plot path and MAV
+    waypoint_view.update(path, mav.msg_true_state)  # plot path and MAV
     data_view.update(mav.msg_true_state, # true states
                      estimated_state, # estimated states
                      commanded_state, # commanded states
