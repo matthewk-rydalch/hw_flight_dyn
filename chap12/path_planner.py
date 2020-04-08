@@ -71,7 +71,11 @@ class path_planner:
                                     Va])
 
             waypoints = self.rrt.planPath(wpp_start, wpp_end, map)
-            self.waypoints.ned = waypoints
+            # waypoints = np.array([[0, 0, -100],
+            #                           [1000, 0, -100],
+            #                           [0, 1000, -100],
+            #                           [1000, 1000, -100]]).T
+            self.waypoints.ned = waypoints.T
             self.waypoints.airspeed = Va
             self.waypoints.num_waypoints = len(waypoints)
         # elif planner_flag == 4:

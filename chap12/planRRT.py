@@ -1,6 +1,7 @@
 import numpy as np
 import random
 from message_types.msg_waypoints import msg_waypoints
+from parameters.aerosonde_parameters import pd0
 
 
 class planRRT():
@@ -15,13 +16,12 @@ class planRRT():
     def planPath(self, wpp_start, wpp_end, map):
 
         # desired down position is down position of end node
-        pd = wpp_end.item(2)
+        pd = pd0
 
         # specify start and end nodes from wpp_start and wpp_end
         # format: N, E, D, cost, parentIndex, connectsToGoalFlag,
         start_node = np.array([wpp_start.item(0), wpp_start.item(1), pd, 0, 0, 0])
-        end_node = start_node + np.array([500.0, 500.0, 0, 0, 0, 0])
-        # end_node = np.array([wpp_end.item(0), wpp_end.item(1), pd, 0, 0, 0])
+        end_node = np.array([wpp_end.item(0), wpp_end.item(1), pd, 0, 0, 0])
         # establish tree starting with the start node
         tree = np.array([start_node])
         numPaths = 0
@@ -119,9 +119,9 @@ class planRRT():
         close_buildings = []
         for i in range(map.num_city_blocks):
             for j in range(map.num_city_blocks):
-                building = np.array([[map.building_north[i], map.building_east[j], map.building_height[i][j]]]).T
+                building = np.array([[map.building_north[i], map.building_east[j], -map.building_height[i][j]]]).T
                 # if np.linalg.norm(building[0:2] - ps[0:2]) <= Del or np.linalg.norm(building[0:2] - pe[0:2]) <= Del:
-                if np.linalg.norm(building[0:2] - pe[0:2]) <= len and pe[2]-building[2] <= len:
+                if np.linalg.norm(building[0:2] - pe[0:2]) <= len and pe[2]-building[2] >= -len:
                     close_buildings.append(building)
 
         # get points along path and check them
@@ -138,7 +138,7 @@ class planRRT():
         point = ps + Del*dir
         while np.linalg.norm(point - ps) <= len:
             for building in close_buildings:
-                if np.linalg.norm(building[0:2] - point[0:2]) <= Del and point[2]-building[2] <= Del:
+                if np.linalg.norm(building[0:2] - point[0:2]) <= Del and point[2]-building[2] >= -Del:
                     return True
             point = point + Del*dir
         return False
