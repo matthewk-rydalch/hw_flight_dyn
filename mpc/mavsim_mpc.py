@@ -16,6 +16,7 @@ from chap7.mav_dynamics import mav_dynamics
 from chap8.observer import observer
 from chap10.path_follower import path_follower
 from chap10.path_viewer import path_viewer
+from mpc.mpc import mpc_manager
 
 # initialize the visualization
 path_view = path_viewer()  # initialize the viewer
@@ -27,14 +28,7 @@ mav = mav_dynamics(SIM.ts_simulation)
 ctrl = autopilot(SIM.ts_simulation)
 obsv = observer(SIM.ts_simulation)
 path_follow = path_follower()
-
-# path definition
-from message_types.msg_path import msg_path
-path = msg_path()
-path.flag = 'line'
-path.line_origin = np.array([[0.0, 0.0, -100.0]]).T
-path.line_direction = np.array([[0.5, 1.0, 0.0]]).T
-path.line_direction = path.line_direction / np.linalg.norm(path.line_direction)
+mpc = mpc_manager()
 
 # initialize the simulation time
 sim_time = SIM.start_time
@@ -47,6 +41,9 @@ while sim_time < SIM.end_time:
     mav.update_sensors() #I added, seems to be necessary
     measurements = mav._sensors  # get sensor measurements
     estimated_state = obsv.update(measurements)  # estimate states from measurements
+
+    #-------MPC-------------------
+    path = mpc.update(estimated_state)
 
     #-------path follower-------------
     autopilot_commands = path_follow.update(path, estimated_state)
