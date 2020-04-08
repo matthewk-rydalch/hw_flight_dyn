@@ -42,6 +42,11 @@ path_plan = path_planner()
 from message_types.msg_map import msg_map
 map = msg_map(PLAN)
 
+# this flag is set for one time step to signal a redraw in the viewer
+# planner_flag = 1  # return simple waypoint path
+# planner_flag = 2  # return dubins waypoint path
+planner_flag = 3  # plan path through city using straight-line RRT
+# planner_flag = 4  # plan path through city using dubins RRT
 
 # initialize the simulation time
 sim_time = SIM.start_time
@@ -56,7 +61,7 @@ while sim_time < SIM.end_time:
 
     # -------path planner - ----
     if path_manage.flag_need_new_waypoints == 1:
-        waypoints = path_plan.update(map, estimated_state)
+        waypoints = path_plan.update(map, estimated_state, planner_flag)
         path_manage.flag_need_new_waypoints = 0
 
     #-------path manager-------------

@@ -15,14 +15,9 @@ class path_planner:
         # waypoints definition
         self.waypoints = msg_waypoints()
 
-    def update(self, map, state):
+    def update(self, map, state, planner_flag):
 
         self.rrt = planRRT(map)
-        # this flag is set for one time step to signal a redraw in the viewer
-        # planner_flag = 1  # return simple waypoint path
-        # planner_flag = 2  # return dubins waypoint path
-        planner_flag = 3  # plan path through city using straight-line RRT
-        # planner_flag = 4  # plan path through city using dubins RRT
         if planner_flag == 1:
             self.waypoints.type = 'fillet'
             self.waypoints.num_waypoints = 4
@@ -71,13 +66,10 @@ class path_planner:
                                     Va])
 
             waypoints = self.rrt.planPath(wpp_start, wpp_end, map)
-            # waypoints = np.array([[0, 0, -100],
-            #                           [1000, 0, -100],
-            #                           [0, 1000, -100],
-            #                           [1000, 1000, -100]]).T
             self.waypoints.ned = waypoints.T
             self.waypoints.airspeed = Va
             self.waypoints.num_waypoints = len(waypoints)
+        #TODO dubins path planner
         # elif planner_flag == 4:
 
         else:
