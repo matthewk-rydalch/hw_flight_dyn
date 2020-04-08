@@ -2,13 +2,17 @@ import numpy as np
 import random
 from message_types.msg_waypoints import msg_waypoints
 from parameters.aerosonde_parameters import pd0
+from parameters.aerosonde_parameters import psi0
+from parameters.planner_parameters import R_min
 
 
 class planRRT():
     def __init__(self, map):
         self.waypoints = msg_waypoints()
-        self.segmentLength = 300 # standard length of path segments
-        #keep in mind the size of the buildings.  Right now they are 360 wide
+        #segment length must be greater than 3*R_min (right now 3*175) for dubins path
+        # I am just going to do two plus a little and hope that it works
+        self.segmentLength = 400 # standard length of path segments
+        #keep in mind the size of the buildings.  Right now they are 72 wide
         self.min_distance = 100 # minimum distance from building center to path
         self.complete_path = []
         self.reqPaths = 3
@@ -17,11 +21,12 @@ class planRRT():
 
         # desired down position is down position of end node
         pd = pd0
-
+        chi0 = psi0
+        chif = np.arctan2(wpp_end.item(1)-wpp_start.item(1), wpp_end.item(0)-wpp_start.item(0))
         # specify start and end nodes from wpp_start and wpp_end
-        # format: N, E, D, cost, parentIndex, connectsToGoalFlag,
-        start_node = np.array([wpp_start.item(0), wpp_start.item(1), pd, 0, 0, 0])
-        end_node = np.array([wpp_end.item(0), wpp_end.item(1), pd, 0, 0, 0])
+        # format: N, E, D, cost, parentIndex, connectsToGoalFlag, course
+        start_node = np.array([wpp_start.item(0), wpp_start.item(1), pd, 0, 0, 0, chi0])
+        end_node = np.array([wpp_end.item(0), wpp_end.item(1), pd, 0, 0, 0, chif])
         # establish tree starting with the start node
         tree = np.array([start_node])
         numPaths = 0
@@ -44,19 +49,19 @@ class planRRT():
         connectsToGoalFlag = 0
         D = self.segmentLength
         p = self.generateRandomNode(map, pd)
-        v_star_index, v_star, v_star_cost = self.findClosestConfiguration(p, tree) #v_star includes just the position
+        v_star_index, v_star, v_star_cost, vp_chi = self.findClosestConfiguration(p, tree) #v_star includes just the position
         v_plus = v_star + D*(p-v_star)/np.linalg.norm(p-v_star) #step a distance D in direction of v_star to p
         v_plus[2][0] = pd
-        if self.feasiblePath(v_star, v_plus, map):
+        if self.feasiblePath(v_star, v_plus, map): #todo add chi to feasiblePath
             cost = v_star_cost + np.linalg.norm(v_plus-v_star) #cost is just set up to be the length of the entire path
             # format: N, E, D, cost, parentIndex, connectsToGoalFlag,
-            new_node = np.array([[v_plus.item(0), v_plus.item(1), v_plus.item(2), cost, v_star_index, connectsToGoalFlag]])
+            new_node = np.array([[v_plus.item(0), v_plus.item(1), v_plus.item(2), cost, v_star_index, connectsToGoalFlag, vp_chi]])
             tree = np.concatenate((tree, new_node))
             if self.check_goal(end_node, D, v_plus, map):
                 connectsToGoalFlag = 1
                 cost = cost + np.linalg.norm(end_node[0:3]-v_plus) #cost is just set up to be the length of the entire path
                 # format: N, E, D, cost, parentIndex, connectsToGoalFlag,
-                new_node = np.array([[end_node.item(0), end_node.item(1), end_node.item(2), cost, len(tree)-1, connectsToGoalFlag]])
+                new_node = np.array([[end_node.item(0), end_node.item(1), end_node.item(2), cost, len(tree)-1, connectsToGoalFlag, end_node.item(6)]])
                 tree = np.concatenate((tree, new_node))
                 self.complete_path.append(new_node)
                 print('completed path')
@@ -82,8 +87,9 @@ class planRRT():
         parent_index = np.argmin(parent_candidate_len) #closest parent candidate to the new node
         parent = np.array([tree_positions[parent_index]]).T
         parent_cost = tree[parent_index][3]
+        vp_chi = np.arctan2(p.item(1)-parent.item(1), p.item(0)-parent.item(0))
 
-        return parent_index, parent, parent_cost
+        return parent_index, parent, parent_cost, vp_chi
 
     def check_goal(self, end_node, segmentLength, v_plus, map):
 
@@ -99,15 +105,24 @@ class planRRT():
         pe = end_node[0:3]
 
         collision = self.collision(ps, pe, map)
-        # # fliable = self.fliable(): #TODO add this function
-        #
-        # if fliable and not collision:
-        #     return True
-        # return False
+        fliable = self.fliable(ps, pe)
+
+        if fliable and not collision:
+            return True
+        return False
         if not collision:
             return True
         return False
 
+    def fliable(self, ps, pe):
+        # ne_s = ps[0:2]
+        # ne_e = pe[0:2]
+        # ell = np.linalg.norm(ne_e-ne_s)
+        # if ell < 2 * R_min: #it is actually 2*R_min from center point to center point, but the nodes can be R from the center point.  So 4 R is safe.
+        #     print('less than 2*R_min')
+        #     return False
+        # print('fliable')
+        return True
 
     def collision(self, ps, pe, map):
 
@@ -132,15 +147,16 @@ class planRRT():
     def pointsAlongPath(self, ps, pe, Del, vec, len, close_buildings):
 
         dir = vec/len
+        small_Del = Del/5.0
 
         #initialize first point
         i = 0
-        point = ps + Del*dir
+        point = ps + small_Del*dir
         while np.linalg.norm(point - ps) <= len:
             for building in close_buildings:
                 if np.linalg.norm(building[0:2] - point[0:2]) <= Del and point[2]-building[2] >= -Del:
                     return True
-            point = point + Del*dir
+            point = point + small_Del*dir
         return False
 
 
@@ -168,9 +184,12 @@ class planRRT():
     def smoothPath(self, path, map):
 
         waypoints = path[:,0:3]
+        course = np.array([path[:,6]])
+        # return waypoints, course.T #TODO get rid of this
         i = 0
         j = 1
         smooth_path = np.array([waypoints[i]])
+        smooth_course = np.array([[course.item(i)]])
         N = len(waypoints)
 
         while j < N:
@@ -178,9 +197,10 @@ class planRRT():
                 j = j-1
                 i = j
                 smooth_path = np.concatenate((smooth_path, np.array([waypoints[i]])))
+                smooth_course = np.concatenate((smooth_course, np.array([[course.item(i)]])))
             j = j+1
         smooth_path = np.concatenate((smooth_path, np.array([waypoints[j-1]])))
+        smooth_course = np.concatenate((smooth_course, np.array([[course.item(j-1)]])))
 
-        return smooth_path
-
+        return smooth_path, smooth_course
 
