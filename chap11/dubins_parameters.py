@@ -33,7 +33,9 @@ class dubins_parameters:
 
         #check segment length
         ell = np.linalg.norm(p_s - p_e)
-        assert(ell >= 2 * R) #book says 3R?
+        if ell < 2 * R: #book says 3R?
+            print('ell < 2R')
+
 
         # decide what dubins path case to use RSR, RSL, exc.
         # get the centers of each case

@@ -42,6 +42,11 @@ path_plan = path_planner()
 from message_types.msg_map import msg_map
 map = msg_map(PLAN)
 
+# this flag is set for one time step to signal a redraw in the viewer
+# planner_flag = 1  # return simple waypoint path
+# planner_flag = 2  # return dubins waypoint path
+# planner_flag = 3  # plan path through city using straight-line RRT
+planner_flag = 4  # plan path through city using dubins RRT
 
 # initialize the simulation time
 sim_time = SIM.start_time
@@ -50,12 +55,14 @@ sim_time = SIM.start_time
 print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
     #-------observer-------------
-    measurements = mav.sensors()  # get sensor measurements
+    mav.update_sensors() #I added this, it seems to be necessary
+    measurements = mav._sensors  # get sensor measurements
     estimated_state = obsv.update(measurements)  # estimate states from measurements
 
     # -------path planner - ----
     if path_manage.flag_need_new_waypoints == 1:
-        waypoints = path_plan.update(map, estimated_state)
+        waypoints = path_plan.update(map, estimated_state, planner_flag)
+        path_manage.flag_need_new_waypoints = 0
 
     #-------path manager-------------
     path = path_manage.update(waypoints, PLAN.R_min, estimated_state)
@@ -67,12 +74,13 @@ while sim_time < SIM.end_time:
     delta, commanded_state = ctrl.update(autopilot_commands, estimated_state)
 
     #-------physical system-------------
-    current_wind = wind.update()  # get the new wind vector
+    # current_wind = wind.update()  # get the new wind vector
+    current_wind = np.zeros((6,1)) #turn off wind
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------
-    world_view.update(map, waypoints, path, mav.true_state)  # plot path and MAV
-    data_view.update(mav.true_state, # true states
+    world_view.update(map, waypoints, path, mav.msg_true_state)  # plot path and MAV
+    data_view.update(mav.msg_true_state, # true states
                      estimated_state, # estimated states
                      commanded_state, # commanded states
                      SIM.ts_simulation)

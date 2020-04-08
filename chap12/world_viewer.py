@@ -80,7 +80,7 @@ class world_viewer():
         # attitude of mav as a rotation matrix R from body to inertial
         R = Euler2Rotation(state.phi, state.theta, state.psi)
         # rotate and translate points defining mav
-        rotated_points = self.rotate_points(self.mav_points, R.T)
+        rotated_points = self.rotate_points(self.mav_points, R)
         translated_points = self.translate_points(rotated_points, mav_position)
         # convert North-East Down to East-North-Up for rendering
         R = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])
@@ -198,9 +198,9 @@ class world_viewer():
 
     def drawPath(self, path):
         red = np.array([[1., 0., 0., 1]])
-        if path.type == 'line':
+        if path.flag == 'line':
             points = self.straight_line_points(path)
-        elif path.type == 'orbit':
+        elif path.flag == 'orbit':
             points = self.orbit_points(path)
         if not self.plot_initialized:
             path_color = np.tile(red, (points.shape[0], 1))
@@ -213,6 +213,8 @@ class world_viewer():
             self.window.addItem(self.path)
         else:
             self.path.setData(pos=points)
+            path_color = np.tile(red, (points.shape[0],1)) #this is Landon's code
+            self.path.setData(pos=points,color=path_color)
 
     def straight_line_points(self, path):
         points = np.array([[path.line_origin.item(0),
@@ -273,9 +275,9 @@ class world_viewer():
         initialize_points = True
         for j in range(0, waypoints.num_waypoints-1):
             self.dubins_path.update(
-                waypoints.ned[:, j],
+                waypoints.ned[:, j:j+1].T[0],
                 waypoints.course.item(j),
-                waypoints.ned[:, j+1],
+                waypoints.ned[:, j+1:j+2].T[0],
                 waypoints.course.item(j+1),
                 radius)
 
