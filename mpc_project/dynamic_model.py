@@ -25,6 +25,11 @@ class dynamic_model():
         xp = xm + Vg * np.cos(thp) * self.Ts
         yp = ym + Vg * np.sin(thp) * self.Ts
 
+        # for i in range(50): #TODO not sure why this is so difficult.  running it 50 times kind of works
+        #     thp = thp + u * self.Ts
+        #     xp = xp + Vg * np.cos(thp) * self.Ts
+        #     yp = yp + Vg * np.sin(thp) * self.Ts
+
         pose2d = np.array([[xp, yp, thp]])
 
         return pose2d

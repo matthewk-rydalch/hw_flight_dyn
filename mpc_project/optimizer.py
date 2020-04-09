@@ -19,6 +19,7 @@ class optimizer():
         u = self.optimize_horizon(xhat, target_hat)
         ###should be part of the optimizer
         waypoint = self.predict_dynamics.update(xhat, u)
+        # waypoint = np.array([[target_hat.item(0), target_hat.item(1), -100.0]]).T #TODO this is for debugging
         ###
 
         # waypoint = np.array([[100.0, 0.0, -100.0]]).T + np.array([[xhat.item(0), 0.0, 0.0]]).T
@@ -75,6 +76,7 @@ class optimizer():
 
         # state and input and return
         optimized_input = res.x[0]
+        # print('optimized input chi_dot', optimized_input)
         return optimized_input
 
     # objective function to be minimized

@@ -15,6 +15,7 @@ class target_manager():
         self.state.psi = 0.0
 
     def update(self):
+        #TODO it looks like the velocity of the platform is not tied to the velocity line plotted
         self.dubins_car()
 
     def estimate(self):
@@ -36,3 +37,5 @@ class target_manager():
         self.posVel[0][0] = x
         self.posVel[1][0] = y
         self.posVel[3][0] = chi
+        self.state.pn = x
+        self.state.pe = y

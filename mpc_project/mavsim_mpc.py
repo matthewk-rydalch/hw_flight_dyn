@@ -29,7 +29,10 @@ mav = mav_dynamics(SIM.ts_simulation)
 ctrl = autopilot(SIM.ts_simulation)
 obsv = observer(SIM.ts_simulation)
 path_follow = path_follower()
-mpc = mpc_manager(SIM.ts_simulation)
+
+#_____mpc parameters______
+Ts_mpc = 1.0
+mpc = mpc_manager(Ts_mpc)
 
 #_____target intial pose and velocity________#
 target_x = 1000.0
@@ -56,7 +59,9 @@ while sim_time < SIM.end_time:
 
     #-------MPC-------------------
     target.update()
-    path = mpc.update(mav.msg_true_state, target) #TODO switch to estimated_state
+    #This
+    if round(sim_time, 3) % Ts_mpc == 0:
+        path = mpc.update(mav.msg_true_state, target) #TODO switch to estimated_state
 
     #-------path follower-------------
     autopilot_commands = path_follow.update(path, estimated_state)
@@ -66,8 +71,8 @@ while sim_time < SIM.end_time:
     delta, commanded_state = ctrl.update(autopilot_commands, estimated_state)
 
     #-------physical system-------------
-    current_wind = wind.update()  # get the new wind vector
-    # current_wind = np.array([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]).T
+    # current_wind = wind.update()  # get the new wind vector
+    current_wind = np.array([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]).T
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------
