@@ -17,6 +17,7 @@ from chap8.observer import observer
 from chap10.path_follower import path_follower
 from mpc_project.waypoint_viewer import waypoint_viewer
 from mpc_project.mpc_manager import mpc_manager
+from mpc_project.target_manager import target_manager
 
 # initialize the visualization
 waypoint_view = waypoint_viewer()  # initialize the viewer
@@ -28,7 +29,16 @@ mav = mav_dynamics(SIM.ts_simulation)
 ctrl = autopilot(SIM.ts_simulation)
 obsv = observer(SIM.ts_simulation)
 path_follow = path_follower()
-mpc = mpc_manager()
+mpc = mpc_manager(SIM.ts_simulation)
+
+#_____target intial pose and velocity________#
+target_x = 1000.0
+target_y = 1000.0
+target_pd = 0.0
+target_chi = -np.pi/2.0
+target_Vg = 20.0
+target_posVel = np.array([[target_x, target_y, target_pd, target_chi, target_Vg]]).T
+target = target_manager(SIM.ts_simulation, target_posVel)
 
 # initialize the simulation time
 sim_time = SIM.start_time
@@ -42,8 +52,11 @@ while sim_time < SIM.end_time:
     measurements = mav._sensors  # get sensor measurements
     estimated_state = obsv.update(measurements)  # estimate states from measurements
 
+
+
     #-------MPC-------------------
-    path = mpc.update(mav.msg_true_state) #TODO switch to estimated_state
+    target.update()
+    path = mpc.update(mav.msg_true_state, target) #TODO switch to estimated_state
 
     #-------path follower-------------
     autopilot_commands = path_follow.update(path, estimated_state)
@@ -58,7 +71,7 @@ while sim_time < SIM.end_time:
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------
-    waypoint_view.update(path, mav.msg_true_state)  # plot path and MAV
+    waypoint_view.update(path, mav.msg_true_state, target.state)  # plot path and MAV
     data_view.update(mav.msg_true_state, # true states
                      estimated_state, # estimated states
                      commanded_state, # commanded states

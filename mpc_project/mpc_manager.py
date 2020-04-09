@@ -6,20 +6,19 @@ from message_types.msg_path import msg_path
 import tools.wrap
 
 from mpc_project.optimizer import optimizer
-from mpc_project.target_manager import target_manager
 
 class mpc_manager():
-    def __init__(self):
+    def __init__(self, Ts):
         # message sent to path follower
+        self.Ts = Ts
         self.path = msg_path()
-        self.optimize = optimizer()
-        self.target = target_manager()
+        self.optimize = optimizer(Ts)
 
-    def update(self, state_estimates):
+    def update(self, state_estimates, target):
 
         #restrict flight to a 2D horizontal plane
         xhat = np.array([[state_estimates.pn, state_estimates.pe, -state_estimates.h, state_estimates.chi, state_estimates.Vg]]).T
-        target_hat = self.target.estimate() #todo implement a moving target
+        target_hat = target.estimate()
 
         u = self.optimize.update(xhat, target_hat)
         vec = np.array([[u.item(0)-xhat.item(0),u.item(1)-xhat.item(1),0.0]]).T

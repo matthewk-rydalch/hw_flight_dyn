@@ -1,19 +1,16 @@
 import numpy as np
 
+from parameters.aerosonde_parameters import pd0
+
 class dynamic_model():
-    def __init__(self):
-        self.Ts = 0.1 #TODO get the right value here
-        self.pd = -100 #TODO get this connected to the real down position
+    def __init__(self, Ts):
+        self.Ts = Ts
+        self.pd = pd0
 
     def update(self, xhat, u): #xhat, target_hat, u):
 
-        #TODO need xhat to include chi and Vg
         #TODO I think the way this is set up, the vehicle will never turn in one step
         pose2d = self.dubins_car(xhat, u)
-        # target_predict = self.dubins_car(target_hat)
-
-        # error_predict = x_predict - target_predict
-
         predicted_waypoint = np.array([[pose2d.item(0), pose2d.item(1), self.pd]]).T
 
         return predicted_waypoint

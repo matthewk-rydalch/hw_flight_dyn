@@ -33,19 +33,22 @@ class waypoint_viewer():
         self.plot_initialized = False # has the mav been plotted yet?
         # get points that define the non-rotated, non-translated mav and the mesh colors
         self.mav_points, self.mav_meshColors = self.get_mav_points()
+        self.target_points, self.target_meshColors = self.get_target_points()
         # dubins path parameters
         self.dubins_path = dubins_parameters()
         self.mav_body = []
+        self.target_body = []
 
     ###################################
     # public functions
-    def update(self, path, state): #def update(self, waypoints, path, state):
+    def update(self, path, state, target_state): #def update(self, waypoints, path, state):
 
         #TODO there is a lot of extra code in here that I may not be using
 
         # initialize the drawing the first time update() is called
         if not self.plot_initialized:
             self.drawMAV(state)
+            self.drawTarget(target_state)
             # self.drawWaypoints(waypoints, path.orbit_radius)
             self.drawPath(path)
             self.plot_initialized = True
@@ -53,6 +56,7 @@ class waypoint_viewer():
         # else update drawing on all other calls to update()
         else:
             self.drawMAV(state)
+            self.drawTarget(target_state) #TODO need to redraw everything every time
             # if waypoints.flag_waypoints_changed==True:
             #     self.drawWaypoints(waypoints, path.orbit_radius)
             if path.flag_path_changed==True:
@@ -100,6 +104,43 @@ class waypoint_viewer():
         else:
             # draw MAV by resetting mesh using rotated and translated points
             self.mav_body.setMeshData(vertexes=mesh, vertexColors=self.mav_meshColors)
+
+    def drawTarget(self, state):
+        """
+        Update the drawing of the MAV.
+
+        The input to this function is a (message) class with properties that define the state.
+        The following properties are assumed:
+            state.pn  # north position
+            state.pe  # east position
+            state.h   # altitude
+            state.phi  # roll angle
+            state.theta  # pitch angle
+            state.psi  # yaw angle
+        """
+        target_position = np.array([[state.pn], [state.pe], [-state.h]])  # NED coordinates
+        # attitude of mav as a rotation matrix R from body to inertial
+        R = Euler2Rotation(state.phi, state.theta, state.psi)
+        # rotate and translate points defining mav
+        rotated_points = self.rotate_points(self.target_points, R)
+        translated_points = self.translate_points(rotated_points, target_position)
+        # convert North-East Down to East-North-Up for rendering
+        R = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])
+
+        translated_points = R @ translated_points
+        # convert points to triangular mesh defined as array of three 3D points (Nx3x3)
+        mesh = self.points_to_mesh(translated_points)
+        if not self.plot_initialized:
+            # initialize drawing of triangular mesh.
+            self.target_body = gl.GLMeshItem(vertexes=mesh,  # defines the triangular mesh (Nx3x3)
+                                  vertexColors=self.target_meshColors,  # defines mesh colors (Nx1)
+                                  drawEdges=True,  # draw edges between mesh elements
+                                  smooth=False,  # speeds up rendering
+                                  computeNormals=False)  # speeds up rendering
+            self.window.addItem(self.target_body)  # add body to plot
+        else:
+            # draw MAV by resetting mesh using rotated and translated points
+            self.target_body.setMeshData(vertexes=mesh, vertexColors=self.mav_meshColors)
 
     def rotate_points(self, points, R):
         "Rotate points by the rotation matrix R"
@@ -172,6 +213,63 @@ class waypoint_viewer():
         meshColors[10] = green  # horizontal tail
         meshColors[11] = green  # horizontal tail
         meshColors[12] = blue  # vertical tail
+        return points, meshColors
+
+    def get_target_points(self):
+        """"
+            Points that define the target, and the colors of the triangular mesh
+        """
+        # define target body parameters
+        height = .1
+        width = 0.5
+        length = 0.5
+        corner1 = np.array([-width, -length, height])
+        corner2 = np.array([width, -length, height])
+        corner3 = np.array([width, length, height])
+        corner4 = np.array([-width, length, height])
+        corner5 = np.array([-width, -length, 0])
+        corner6 = np.array([width, -length, 0])
+        corner7 = np.array([width, length, 0])
+        corner8 = np.array([-width, length, 0])
+
+        #points are in NED coordinates
+        #   define the points on the aircraft following diagram Fig 2.14
+        points = np.array([corner1,  # point 1 [0]
+                           corner2,
+                           corner3,
+                           corner4,
+                           corner1,
+                           corner5,
+                           corner6,
+                           corner2,
+                           corner6,
+                           corner7,
+                           corner3,
+                           corner7,
+                           corner8,
+                           corner4,
+                           corner8,
+                           corner5]).T
+
+        # scale points for better rendering
+        scale = 50
+        points = scale * points
+
+        #   define the colors for each face of triangular mesh
+        red = np.array([1., 0., 0., 1])
+        green = np.array([0., 1., 0., 1])
+        blue = np.array([0., 0., 1., 1])
+        yellow = np.array([1., 1., 0., 1])
+        meshColors = np.empty((13, 3, 4), dtype=np.float32)
+        meshColors[0] = yellow  #8 sides of a rectangle
+        meshColors[1] = yellow
+        meshColors[2] = yellow
+        meshColors[3] = green
+        meshColors[4] = green
+        meshColors[5] = blue
+        meshColors[6] = blue
+        meshColors[7] = red
+
         return points, meshColors
 
     def points_to_mesh(self, points):

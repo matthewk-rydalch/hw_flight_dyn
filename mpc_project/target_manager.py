@@ -1,25 +1,38 @@
 import numpy as np
+from message_types.msg_state import msg_state
 
 class target_manager():
-    def __init__(self):
-        self.Ts = 0.1 #TODO get the right start values for all of these
-        self.x = 100
-        self.y = 100
-        self.d = -100
-        self.chi = -np.pi/2.0
-        self.Vg = 20
+    def __init__(self, Ts, posVel):
+        self.Ts = Ts
+        self.posVel = posVel
+        #for plotting
+        self.state = msg_state()
+        self.state.pn = posVel.item(0)
+        self.state.pe = posVel.item(1)
+        self.state.h = -posVel.item(2)
+        self.state.phi = 0.0
+        self.state.theta = 0.0
+        self.state.psi = 0.0
 
     def update(self):
         self.dubins_car()
 
     def estimate(self):
 
-        target_hat = np.array([[self.x, self.y, self.d, self.chi, self.Vg]]).T
+        #TODO add noise?
+        target_hat = self.posVel
 
         return target_hat
 
-    def dubins_car(self):
+    def dubins_car(self, u = 0.0):
+        x = self.posVel.item(0)
+        y = self.posVel.item(1)
+        chi = self.posVel.item(3)
+        Vg = self.posVel.item(4)
+        chi = chi + u * self.Ts
+        x = x + Vg * np.cos(chi) * self.Ts
+        y = y + Vg * np.sin(chi) * self.Ts
 
-        self.chi = self.chi + self.u * self.Ts
-        self.x = self.x + self.Vg * np.cos(self.chi) * self.Ts
-        self.y = self.y + self.Vg * np.sin(self.chi) * self.Ts
+        self.posVel[0][0] = x
+        self.posVel[1][0] = y
+        self.posVel[3][0] = chi

@@ -8,9 +8,9 @@ from scipy.optimize import minimize
 from mpc_project.dynamic_model import dynamic_model
 
 class optimizer():
-    def __init__(self):
-        self.Ts = 0.1 #TODO get a good value here
-        self.predict_dynamics = dynamic_model()
+    def __init__(self, Ts):
+        self.Ts = Ts
+        self.predict_dynamics = dynamic_model(Ts)
         self.u = 0.0
         self.u_bound = np.pi/6.0 #plus or minus #TODO get the actual value for this
 
