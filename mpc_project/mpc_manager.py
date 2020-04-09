@@ -18,12 +18,20 @@ class mpc_manager():
     def update(self, state_estimates):
 
         #restrict flight to a 2D horizontal plane
-        xhat = np.array([[state_estimates.pn, state_estimates.pe, -state_estimates.h]]).T
-        target_hat = self.target.estimate()
+        xhat = np.array([[state_estimates.pn, state_estimates.pe, -state_estimates.h, state_estimates.chi, state_estimates.Vg]]).T
+        target_hat = self.target.estimate() #todo implement a moving target
 
         u = self.optimize.update(xhat, target_hat)
-        direction = np.array([[u.item(0)-xhat.item(0),u.item(1)-xhat.item(1),0.0]]).T
-        direction = direction/np.linalg.norm(direction)
+        vec = np.array([[u.item(0)-xhat.item(0),u.item(1)-xhat.item(1),0.0]]).T
+        len = np.linalg.norm(vec)
+        if len < 0.001:
+            len = np.linalg.norm([xhat.item(0),xhat.item(1),0.0])
+            if len < 0.001:
+                direction = np.array([[1.0, 0.0, 0.0]]).T
+            else:
+                direction = np.array([[xhat.item(0), xhat.item(1), 0.0]]).T/len
+        else:
+            direction = vec/len
 
         self.path.flag = 'line'
         self.path.line_origin = u
