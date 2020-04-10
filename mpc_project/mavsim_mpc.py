@@ -32,7 +32,7 @@ path_follow = path_follower()
 
 #_____mpc parameters______
 Ts_mpc = 1.0
-time_horizon = 50 #in units of Ts_mpc
+time_horizon = 25 #in units of Ts_mpc
 mpc = mpc_manager(Ts_mpc, time_horizon)
 
 #_____target intial pose and velocity________#

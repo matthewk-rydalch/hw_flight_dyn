@@ -13,7 +13,7 @@ class optimizer():
         self.N = time_horizon  # in units of Ts
         self.predict_dynamics = dynamic_model(Ts)
         self.u = np.zeros(time_horizon)
-        self.u_bound = np.pi/6.0 #plus or minus #TODO get the actual value for this
+        self.u_bound = np.pi/14.0 #from experimental test
 
     def update(self, xhat, target_hat):
 
@@ -77,6 +77,11 @@ class optimizer():
 
         # state and input and return
         optimized_inputs = res.x
+
+        #set up the next time steps intial guess
+        for i in range(self.N-1):
+            self.u[i] = res.x[i+1]
+        self.u[self.N-1] = res.x[self.N-1]
 
         return optimized_inputs
 
