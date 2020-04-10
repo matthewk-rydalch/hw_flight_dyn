@@ -41,7 +41,7 @@ class waypoint_viewer():
 
     ###################################
     # public functions
-    def update(self, path, state, target_state): #def update(self, waypoints, path, state):
+    def update(self, waypoints, path, state, target_state):
 
         #TODO there is a lot of extra code in here that I may not be using
 
@@ -49,7 +49,7 @@ class waypoint_viewer():
         if not self.plot_initialized:
             self.drawMAV(state)
             self.drawTarget(target_state)
-            # self.drawWaypoints(waypoints, path.orbit_radius)
+            self.drawWaypoints(waypoints, path.orbit_radius)
             self.drawPath(path)
             self.plot_initialized = True
 
@@ -57,10 +57,12 @@ class waypoint_viewer():
         else:
             self.drawMAV(state)
             self.drawTarget(target_state) #TODO need to redraw everything every time
-            # if waypoints.flag_waypoints_changed==True:
-            #     self.drawWaypoints(waypoints, path.orbit_radius)
+            if waypoints.flag_waypoints_changed==True:
+                self.drawWaypoints(waypoints, path.orbit_radius)
+                waypoints.flag_waypoints_changed = False
             if path.flag_path_changed==True:
                 self.drawPath(path)
+                path.flag_path_changed=False
 
         # update the center of the camera view to the mav location
         #view_location = Vector(state.pe, state.pn, state.h)  # defined in ENU coordinates
@@ -358,7 +360,7 @@ class waypoint_viewer():
             waypoint_color = np.tile(blue, (points.shape[0], 1))
             self.waypoints = gl.GLLinePlotItem(pos=points,
                                                color=waypoint_color,
-                                               width=2,
+                                               width=10,
                                                antialias=True,
                                                mode='line_strip')
             self.window.addItem(self.waypoints)

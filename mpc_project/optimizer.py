@@ -17,15 +17,15 @@ class optimizer():
 
     def update(self, xhat, target_hat):
 
-        u = self.optimize_horizon(xhat, target_hat)
+        us = self.optimize_horizon(xhat, target_hat)
         ###should be part of the optimizer
-        waypoint = self.predict_dynamics.update(xhat, u)
+        waypoints = self.predict_dynamics.update(xhat, us, self.N)
         # waypoint = np.array([[target_hat.item(0), target_hat.item(1), -100.0]]).T #TODO this is for debugging
         ###
 
         # waypoint = np.array([[100.0, 0.0, -100.0]]).T + np.array([[xhat.item(0), 0.0, 0.0]]).T
 
-        return waypoint
+        return waypoints
 
     def optimize_horizon(self, xhat, target_hat):
         #TODO need to change this for a horizon greater than 1
@@ -76,9 +76,9 @@ class optimizer():
                        bounds=bds, options={'ftol': 1e-10, 'disp': False})
 
         # state and input and return
-        optimized_input = res.x[0]
+        optimized_inputs = res.x
 
-        return optimized_input
+        return optimized_inputs
 
     # objective function to be minimized
     def mpc_objective(self, u, x, Vg, target_Vg):

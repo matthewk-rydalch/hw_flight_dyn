@@ -32,7 +32,7 @@ path_follow = path_follower()
 
 #_____mpc parameters______
 Ts_mpc = 1.0
-time_horizon = 5 #in units of Ts_mpc
+time_horizon = 50 #in units of Ts_mpc
 mpc = mpc_manager(Ts_mpc, time_horizon)
 
 #_____target intial pose and velocity________#
@@ -59,7 +59,7 @@ while sim_time < SIM.end_time:
     #-------MPC-------------------
     target.update()
     if round(sim_time, 3) % Ts_mpc == 0: #this is to reduce the frequency of running mpc.  It works better.
-        path = mpc.update(mav.msg_true_state, target) #TODO switch to estimated_state
+        waypoints, path = mpc.update(mav.msg_true_state, target) #TODO switch to estimated_state
 
     #-------path follower-------------
     autopilot_commands = path_follow.update(path, estimated_state)
@@ -74,7 +74,7 @@ while sim_time < SIM.end_time:
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------
-    waypoint_view.update(path, mav.msg_true_state, target.state)  # plot path and MAV
+    waypoint_view.update(waypoints, path, mav.msg_true_state, target.state)  # plot path and MAV
     data_view.update(mav.msg_true_state, # true states
                      estimated_state, # estimated states
                      commanded_state, # commanded states

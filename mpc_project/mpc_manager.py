@@ -3,6 +3,7 @@ import sys
 sys.path.append('..')
 from chap11.dubins_parameters import dubins_parameters
 from message_types.msg_path import msg_path
+from message_types.msg_waypoints import msg_waypoints
 import tools.wrap
 
 from mpc_project.optimizer import optimizer
@@ -13,6 +14,8 @@ class mpc_manager():
         self.Ts = Ts
         self.path = msg_path()
         self.optimize = optimizer(Ts, time_horizon)
+        self.waypoints = msg_waypoints()
+        self.N = time_horizon
 
     def update(self, state_estimates, target):
 
@@ -20,9 +23,9 @@ class mpc_manager():
         xhat = np.array([[state_estimates.pn, state_estimates.pe, -state_estimates.h, state_estimates.chi, state_estimates.Vg]]).T
         target_hat = target.estimate()
 
-        #TODO change variable name for u
-        waypoint = self.optimize.update(xhat, target_hat)
-        scale = 100 #this is to make the direction more accurate
+        waypoints = self.optimize.update(xhat, target_hat)
+        waypoint = np.array([waypoints[0]]).T
+        scale = 100 #this is to make the direction more accurate #TODO get rid of scale?
         vec = scale*np.array([[waypoint.item(0)-xhat.item(0),waypoint.item(1)-xhat.item(1),0.0]]).T
         len = np.linalg.norm(vec)
         if len < 0.001:
@@ -44,6 +47,11 @@ class mpc_manager():
         self.path.flag = 'line'
         self.path.line_origin = waypoint
         self.path.line_direction = direction
-        self.path.flag_path_changed
+        self.path.flag_path_changed = True
 
-        return self.path
+        self.waypoints.type = 'straight_line'
+        self.waypoints.num_waypoints = self.N
+        self.waypoints.ned = waypoints.T
+        self.waypoints.flag_waypoints_changed = True
+
+        return self.waypoints, self.path
