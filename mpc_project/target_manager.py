@@ -13,15 +13,18 @@ class target_manager():
         self.state.phi = 0.0
         self.state.theta = 0.0
         self.state.psi = 0.0
+        self.sigma = 5.0
 
     def update(self):
-        #TODO it looks like the velocity of the platform is not tied to the velocity line plotted
+        #t looks like the position of the target slowly deviates from the truth in the plot
         self.dubins_car()
 
     def estimate(self):
 
-        #TODO add noise?
-        target_hat = self.posVel
+        noise = np.array([[np.random.normal(0.0, self.sigma)],
+                          [np.random.normal(0.0, self.sigma)], [0.0], [0.0], [0.0]])
+
+        target_hat = self.posVel + noise
 
         return target_hat
 

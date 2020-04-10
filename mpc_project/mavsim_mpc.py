@@ -59,18 +59,17 @@ while sim_time < SIM.end_time:
     #-------MPC-------------------
     target.update()
     if round(sim_time, 3) % Ts_mpc == 0: #this is to reduce the frequency of running mpc.  It works better.
-        waypoints, path = mpc.update(mav.msg_true_state, target) #TODO switch to estimated_state
+        waypoints, path = mpc.update(estimated_state, target)
 
     #-------path follower-------------
     autopilot_commands = path_follow.update(path, estimated_state)
-    # autopilot_commands = path_follow.update(path, mav.msg_true_state) #for debugging
 
     #-------controller-------------
     delta, commanded_state = ctrl.update(autopilot_commands, estimated_state)
 
     #-------physical system-------------
     # current_wind = wind.update()  # get the new wind vector
-    current_wind = np.array([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]).T
+    current_wind = np.array([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]).T #wind messes up the velocity matching, so leave it out.
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------

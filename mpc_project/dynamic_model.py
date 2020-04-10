@@ -10,7 +10,7 @@ class dynamic_model():
         self.yt = 0.0
         self.tht = 0.0
 
-    def update(self, xhat, u, N): #xhat, target_hat, u):
+    def update(self, xhat, u, N):
 
         predicted_waypoints = np.zeros((N,3))
         self.xt = xhat.item(0)
@@ -28,8 +28,3 @@ class dynamic_model():
         self.tht = self.tht + u * self.Ts
         self.xt = self.xt + Vg * np.cos(self.tht) * self.Ts
         self.yt = self.yt + Vg * np.sin(self.tht) * self.Ts
-
-        # for i in range(50): #TODO not sure why this is so difficult.  running it 50 times kind of works
-        #     thp = thp + u * self.Ts
-        #     xp = xp + Vg * np.cos(thp) * self.Ts
-        #     yp = yp + Vg * np.sin(thp) * self.Ts

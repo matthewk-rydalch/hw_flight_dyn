@@ -10,10 +10,8 @@ import numpy as np
 
 import pyqtgraph as pg
 import pyqtgraph.opengl as gl
-import pyqtgraph.Vector as Vector
 
 from tools.rotations import Euler2Rotation
-from chap11.dubins_parameters import dubins_parameters
 
 class waypoint_viewer():
     def __init__(self):
@@ -34,8 +32,6 @@ class waypoint_viewer():
         # get points that define the non-rotated, non-translated mav and the mesh colors
         self.mav_points, self.mav_meshColors = self.get_mav_points()
         self.target_points, self.target_meshColors = self.get_target_points()
-        # dubins path parameters
-        self.dubins_path = dubins_parameters()
         self.mav_body = []
         self.target_body = []
 
@@ -43,31 +39,25 @@ class waypoint_viewer():
     # public functions
     def update(self, waypoints, path, state, target_state):
 
-        #TODO there is a lot of extra code in here that I may not be using
-
         # initialize the drawing the first time update() is called
         if not self.plot_initialized:
             self.drawMAV(state)
             self.drawTarget(target_state)
-            self.drawWaypoints(waypoints, path.orbit_radius)
+            self.drawWaypoints(waypoints)
             self.drawPath(path)
             self.plot_initialized = True
 
         # else update drawing on all other calls to update()
         else:
             self.drawMAV(state)
-            self.drawTarget(target_state) #TODO need to redraw everything every time
+            self.drawTarget(target_state)
             if waypoints.flag_waypoints_changed==True:
-                self.drawWaypoints(waypoints, path.orbit_radius)
+                self.drawWaypoints(waypoints)
                 waypoints.flag_waypoints_changed = False
             if path.flag_path_changed==True:
                 self.drawPath(path)
                 path.flag_path_changed=False
 
-        # update the center of the camera view to the mav location
-        #view_location = Vector(state.pe, state.pn, state.h)  # defined in ENU coordinates
-        #self.window.opts['center'] = view_location
-        # redraw
         self.app.processEvents()
 
     def drawMAV(self, state):
@@ -222,6 +212,7 @@ class waypoint_viewer():
             Points that define the target, and the colors of the triangular mesh
         """
         # define target body parameters
+        #TODO get the target centered
         height = .1
         width = 0.5
         length = 0.5
@@ -329,33 +320,10 @@ class waypoint_viewer():
         points = points @ R.T
         return points
 
-    def orbit_points(self, path):
-        N = 20
-        theta = 0
-        theta_list = [theta]
-        while theta < 2*np.pi:
-            theta += 0.1
-            theta_list.append(theta)
-        points = np.array([[path.orbit_center.item(0) + path.orbit_radius,
-                            path.orbit_center.item(1),
-                            path.orbit_center.item(2)]])
-        for angle in theta_list:
-            new_point = np.array([[path.orbit_center.item(0) + path.orbit_radius * np.cos(angle),
-                                   path.orbit_center.item(1) + path.orbit_radius * np.sin(angle),
-                                   path.orbit_center.item(2)]])
-            points = np.concatenate((points, new_point), axis=0)
-        # convert North-East Down to East-North-Up for rendering
-        R = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])
-        points = points @ R.T
-        return points
-
-    def drawWaypoints(self, waypoints, radius):
+    def drawWaypoints(self, waypoints):
         blue = np.array([[0., 0., 1., 1.]])
         blue = np.array([[30, 144, 255, 255]])/255.
-        if waypoints.type=='straight_line' or waypoints.type=='fillet':
-            points = self.straight_waypoint_points(waypoints)
-        elif waypoints.type=='dubins':
-            points = self.dubins_points(waypoints, radius, 0.1)
+        points = self.straight_waypoint_points(waypoints)
         if not self.plot_initialized:
             waypoint_color = np.tile(blue, (points.shape[0], 1))
             self.waypoints = gl.GLLinePlotItem(pos=points,
@@ -371,108 +339,3 @@ class waypoint_viewer():
         R = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])
         points = R @ waypoints.ned
         return points.T
-
-    def dubins_points(self, waypoints, radius, Del):
-        initialize_points = True
-        for j in range(0, waypoints.num_waypoints-1):
-            self.dubins_path.update(
-                waypoints.ned[:, j:j+1].T[0],
-                waypoints.course.item(j),
-                waypoints.ned[:, j+1:j+2].T[0],
-                waypoints.course.item(j+1),
-                radius)
-
-            # points along start circle
-            th1 = np.arctan2(self.dubins_path.p_s.item(1) - self.dubins_path.center_s.item(1),
-                            self.dubins_path.p_s.item(0) - self.dubins_path.center_s.item(0))
-            th1 = mod(th1)
-            th2 = np.arctan2(self.dubins_path.r1.item(1) - self.dubins_path.center_s.item(1),
-                             self.dubins_path.r1.item(0) - self.dubins_path.center_s.item(0))
-            th2 = mod(th2)
-            th = th1
-            theta_list = [th]
-            if self.dubins_path.dir_s > 0:
-                if th1 >= th2:
-                    while th < th2 + 2*np.pi:
-                        th += Del
-                        theta_list.append(th)
-                else:
-                    while th < th2:
-                        th += Del
-                        theta_list.append(th)
-            else:
-                if th1 <= th2:
-                    while th > th2 - 2*np.pi:
-                        th -= Del
-                        theta_list.append(th)
-                else:
-                    while th > th2:
-                        th -= Del
-                        theta_list.append(th)
-
-            if initialize_points:
-                points = np.array([[self.dubins_path.center_s.item(0) + self.dubins_path.radius * np.cos(theta_list[0]),
-                                    self.dubins_path.center_s.item(1) + self.dubins_path.radius * np.sin(theta_list[0]),
-                                    self.dubins_path.center_s.item(2)]])
-                initialize_points = False
-            for angle in theta_list:
-                new_point = np.array([[self.dubins_path.center_s.item(0) + self.dubins_path.radius * np.cos(angle),
-                                       self.dubins_path.center_s.item(1) + self.dubins_path.radius * np.sin(angle),
-                                       self.dubins_path.center_s.item(2)]])
-                points = np.concatenate((points, new_point), axis=0)
-
-            # points along straight line
-            sig = 0
-            while sig <= 1:
-                new_point = np.array([[(1 - sig) * self.dubins_path.r1.item(0) + sig * self.dubins_path.r2.item(0),
-                                       (1 - sig) * self.dubins_path.r1.item(1) + sig * self.dubins_path.r2.item(1),
-                                       (1 - sig) * self.dubins_path.r1.item(2) + sig * self.dubins_path.r2.item(2)]])
-                points = np.concatenate((points, new_point), axis=0)
-                sig += Del
-
-            # points along end circle
-            th2 = np.arctan2(self.dubins_path.p_e.item(1) - self.dubins_path.center_e.item(1),
-                             self.dubins_path.p_e.item(0) - self.dubins_path.center_e.item(0))
-            th2 = mod(th2)
-            th1 = np.arctan2(self.dubins_path.r2.item(1) - self.dubins_path.center_e.item(1),
-                             self.dubins_path.r2.item(0) - self.dubins_path.center_e.item(0))
-            th1 = mod(th1)
-            th = th1
-            theta_list = [th]
-            if self.dubins_path.dir_e > 0:
-                if th1 >= th2:
-                    while th < th2 + 2 * np.pi:
-                        th += Del
-                        theta_list.append(th)
-                else:
-                    while th < th2:
-                        th += Del
-                        theta_list.append(th)
-            else:
-                if th1 <= th2:
-                    while th > th2 - 2 * np.pi:
-                        th -= Del
-                        theta_list.append(th)
-                else:
-                    while th > th2:
-                        th -= Del
-                        theta_list.append(th)
-            for angle in theta_list:
-                new_point = np.array([[self.dubins_path.center_e.item(0) + self.dubins_path.radius * np.cos(angle),
-                                       self.dubins_path.center_e.item(1) + self.dubins_path.radius * np.sin(angle),
-                                       self.dubins_path.center_e.item(2)]])
-                points = np.concatenate((points, new_point), axis=0)
-
-        R = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])
-        points = points @ R.T
-        return points
-
-def mod(x):
-    # force x to be between 0 and 2*pi
-    while x < 0:
-        x += 2*np.pi
-    while x > 2*np.pi:
-        x -= 2*np.pi
-    return x
-
-
