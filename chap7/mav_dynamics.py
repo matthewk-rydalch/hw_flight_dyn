@@ -54,6 +54,7 @@ class mav_dynamics:
         self._beta = 0
         # initialize true_state message
         self.msg_true_state = msg_state()
+        self.msg_true_state.h = -MAV.pd0
 
         # initialize the sensors message
         self._sensors = msg_sensors()
