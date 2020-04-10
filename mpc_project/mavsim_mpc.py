@@ -32,14 +32,15 @@ path_follow = path_follower()
 
 #_____mpc parameters______
 Ts_mpc = 1.0
-mpc = mpc_manager(Ts_mpc)
+time_horizon = 5 #in units of Ts_mpc
+mpc = mpc_manager(Ts_mpc, time_horizon)
 
 #_____target intial pose and velocity________#
 target_x = 1000.0
 target_y = 1000.0
 target_pd = 0.0
 target_chi = -np.pi/2.0
-target_Vg = 20.0
+target_Vg = 25.0
 target_posVel = np.array([[target_x, target_y, target_pd, target_chi, target_Vg]]).T
 target = target_manager(SIM.ts_simulation, target_posVel)
 
@@ -55,12 +56,9 @@ while sim_time < SIM.end_time:
     measurements = mav._sensors  # get sensor measurements
     estimated_state = obsv.update(measurements)  # estimate states from measurements
 
-
-
     #-------MPC-------------------
     target.update()
-    #This
-    if round(sim_time, 3) % Ts_mpc == 0:
+    if round(sim_time, 3) % Ts_mpc == 0: #this is to reduce the frequency of running mpc.  It works better.
         path = mpc.update(mav.msg_true_state, target) #TODO switch to estimated_state
 
     #-------path follower-------------

@@ -8,11 +8,11 @@ import tools.wrap
 from mpc_project.optimizer import optimizer
 
 class mpc_manager():
-    def __init__(self, Ts):
+    def __init__(self, Ts, time_horizon):
         # message sent to path follower
         self.Ts = Ts
         self.path = msg_path()
-        self.optimize = optimizer(Ts)
+        self.optimize = optimizer(Ts, time_horizon)
 
     def update(self, state_estimates, target):
 

@@ -8,10 +8,11 @@ from scipy.optimize import minimize
 from mpc_project.dynamic_model import dynamic_model
 
 class optimizer():
-    def __init__(self, Ts):
+    def __init__(self, Ts, time_horizon):
         self.Ts = Ts
+        self.N = time_horizon  # in units of Ts
         self.predict_dynamics = dynamic_model(Ts)
-        self.u = 0.0
+        self.u = np.zeros(time_horizon)
         self.u_bound = np.pi/6.0 #plus or minus #TODO get the actual value for this
 
     def update(self, xhat, target_hat):
@@ -43,7 +44,7 @@ class optimizer():
         xm = np.array([[xm, ym, thm, target_xm, target_ym, target_thm]]).T
 
         #bounds
-        bds = np.array([(-self.u_bound, self.u_bound)])
+        bds = np.ones((self.N,1))@np.array([[-self.u_bound, self.u_bound]])
 
         # # define equality constraints
         # cons = ({'type': 'eq',
@@ -76,26 +77,27 @@ class optimizer():
 
         # state and input and return
         optimized_input = res.x[0]
-        # print('optimized input chi_dot', optimized_input)
+
         return optimized_input
 
     # objective function to be minimized
     def mpc_objective(self, u, x, Vg, target_Vg):
         # define initial state and input
-        xm = x.item(0)
-        ym = x.item(1)
-        thm = x.item(2) #chi
-        target_xm = x.item(3)
-        target_ym = x.item(4)
-        target_thm = x.item(5)
+        xt = x.item(0)
+        yt = x.item(1)
+        tht = x.item(2) #chi
+        target_xt = x.item(3)
+        target_yt = x.item(4)
+        target_tht = x.item(5)
 
-        thp = thm + u * self.Ts
-        xp = xm + Vg * np.cos(thp) * self.Ts
-        yp = ym + Vg * np.sin(thp) * self.Ts
+        for n in range(self.N):
+            tht = tht + u[n] * self.Ts
+            xt = xt + Vg * np.cos(tht) * self.Ts
+            yt = yt + Vg * np.sin(tht) * self.Ts
 
-        target_thp = target_thm
-        target_xp = target_xm + target_Vg * np.cos(target_thp) * self.Ts
-        target_yp = target_ym + target_Vg * np.sin(target_thp) * self.Ts
+            target_tht = target_tht
+            target_xt = target_xt + target_Vg * np.cos(target_tht) * self.Ts
+            target_yt = target_yt + target_Vg * np.sin(target_tht) * self.Ts
 
         # pd_dot = -Va * np.sin(gamma)
         # u_dot = 0.0
@@ -114,9 +116,9 @@ class optimizer():
         # xdot = mav._derivatives(mav._state, forces_moments)
 
         J_vec = np.zeros((3, 1))
-        J_vec[0] = xp - target_xp
-        J_vec[1] = yp - target_yp
-        J_vec[2] = thp - target_thp
+        J_vec[0] = xt - target_xt
+        J_vec[1] = yt - target_yt
+        J_vec[2] = tht - target_tht
 
         J = np.linalg.norm(J_vec) ** 2
         return J
