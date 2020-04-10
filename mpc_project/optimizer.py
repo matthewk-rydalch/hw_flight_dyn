@@ -20,7 +20,9 @@ class optimizer():
 
         us = self.optimize_horizon(xhat, target_hat)
 
-        return self.waypoints
+        u = us.item(0)
+
+        return self.waypoints, u
 
     def optimize_horizon(self, xhat, target_hat):
 
@@ -74,12 +76,12 @@ class optimizer():
 
         for n in range(1,self.N,1):
             tht[n] = tht.item(n-1) + u.item(n) * self.Ts
-            xt[n] = xt.item(n-1) + Vg * np.cos(tht.item(n-1)) * self.Ts
-            yt[n] = yt.item(n-1) + Vg * np.sin(tht.item(n-1)) * self.Ts
+            xt[n] = xt.item(n-1) + Vg * np.cos(tht.item(n)) * self.Ts
+            yt[n] = yt.item(n-1) + Vg * np.sin(tht.item(n)) * self.Ts
 
             target_tht[n] = target_tht.item(n-1)
-            target_xt[n] = target_xt.item(n-1) + target_Vg * np.cos(target_tht.item(n-1)) * self.Ts
-            target_yt[n] = target_yt.item(n-1) + target_Vg * np.sin(target_tht.item(n-1)) * self.Ts
+            target_xt[n] = target_xt.item(n-1) + target_Vg * np.cos(target_tht.item(n)) * self.Ts
+            target_yt[n] = target_yt.item(n-1) + target_Vg * np.sin(target_tht.item(n)) * self.Ts
 
             #this is Y.T@Y
             error2 = error2 + (xt.item(n)-target_xt.item(n))**2+(yt.item(n)-target_yt.item(n))**2

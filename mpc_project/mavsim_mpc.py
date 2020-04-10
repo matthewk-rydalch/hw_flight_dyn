@@ -32,7 +32,7 @@ path_follow = path_follower()
 
 #_____mpc parameters______
 Ts_mpc = 1.0
-time_horizon = 25 #in units of Ts_mpc
+time_horizon = 50 #in units of Ts_mpc
 mpc = mpc_manager(Ts_mpc, time_horizon)
 
 #_____target intial pose and velocity________#
@@ -59,10 +59,13 @@ while sim_time < SIM.end_time:
     #-------MPC-------------------
     target.update()
     if round(sim_time, 3) % Ts_mpc == 0: #this is to reduce the frequency of running mpc.  It works better.
-        waypoints, path = mpc.update(estimated_state, target)
+        waypoints, path, u = mpc.update(estimated_state, target)
 
     #-------path follower-------------
     autopilot_commands = path_follow.update(path, estimated_state)
+    # autopilot_commands.course_command = u #use the u (for course) from mpc in the autopilot
+    #It is better to use the path generated commands from the mpc waypoints.
+    #this is because the u updates less frequently.
 
     #-------controller-------------
     delta, commanded_state = ctrl.update(autopilot_commands, estimated_state)

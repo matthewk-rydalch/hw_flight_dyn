@@ -22,7 +22,7 @@ class mpc_manager():
         xhat = np.array([[state_estimates.pn, state_estimates.pe, -state_estimates.h, state_estimates.chi, state_estimates.Vg]]).T
         target_hat = target.estimate()
 
-        waypoints = self.optimize.update(xhat, target_hat)
+        waypoints, u = self.optimize.update(xhat, target_hat)
         waypoint = np.array([waypoints[0]]).T
         vec = np.array([[waypoint.item(0)-xhat.item(0),waypoint.item(1)-xhat.item(1),0.0]]).T
         len = np.linalg.norm(vec)
@@ -47,4 +47,4 @@ class mpc_manager():
         self.waypoints.ned = waypoints.T
         self.waypoints.flag_waypoints_changed = True
 
-        return self.waypoints, self.path
+        return self.waypoints, self.path, u
