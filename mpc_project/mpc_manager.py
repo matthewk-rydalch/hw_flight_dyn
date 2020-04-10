@@ -5,6 +5,7 @@ sys.path.append('..')
 from message_types.msg_path import msg_path
 from message_types.msg_waypoints import msg_waypoints
 
+from parameters.aerosonde_parameters import pd0
 from mpc_project.optimizer import optimizer
 
 class mpc_manager():
@@ -22,8 +23,14 @@ class mpc_manager():
         xhat = np.array([[state_estimates.pn, state_estimates.pe, -state_estimates.h, state_estimates.chi, state_estimates.Vg]]).T
         target_hat = target.estimate()
 
+        #---------------------mpc-------------------#
         waypoints, u = self.optimize.update(xhat, target_hat)
         waypoint = np.array([waypoints[0]]).T
+        #----------moving waypoint following--------#
+        # waypoints = np.array([[xhat.item(0), xhat.item(1), pd0], [target_hat.item(0), target_hat.item(1), pd0]])
+        # u = xhat.item(3) #this is the current chi and would not work well to be fed in the controller
+        # waypoint = np.array([waypoints[1]]).T
+
         vec = np.array([[waypoint.item(0)-xhat.item(0),waypoint.item(1)-xhat.item(1),0.0]]).T
         len = np.linalg.norm(vec)
         if len < 0.001:
