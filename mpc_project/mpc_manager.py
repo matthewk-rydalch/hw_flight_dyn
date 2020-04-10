@@ -1,10 +1,9 @@
 import numpy as np
 import sys
 sys.path.append('..')
-from chap11.dubins_parameters import dubins_parameters
+
 from message_types.msg_path import msg_path
 from message_types.msg_waypoints import msg_waypoints
-import tools.wrap
 
 from mpc_project.optimizer import optimizer
 
@@ -25,8 +24,7 @@ class mpc_manager():
 
         waypoints = self.optimize.update(xhat, target_hat)
         waypoint = np.array([waypoints[0]]).T
-        scale = 100 #this is to make the direction more accurate #TODO get rid of scale?
-        vec = scale*np.array([[waypoint.item(0)-xhat.item(0),waypoint.item(1)-xhat.item(1),0.0]]).T
+        vec = np.array([[waypoint.item(0)-xhat.item(0),waypoint.item(1)-xhat.item(1),0.0]]).T
         len = np.linalg.norm(vec)
         if len < 0.001:
             len = np.linalg.norm([xhat.item(0),xhat.item(1),0.0])
@@ -38,11 +36,6 @@ class mpc_manager():
                 print('cant compute direction')
         else:
             direction = vec/len
-            # print('direction = ', direction)
-
-        # direction = np.array([[1.0,0.0,0.0]]).T #TODO for debugging
-        # vec = np.array([[target_hat.item(0) - xhat.item(0), target_hat.item(1) - xhat.item(1), 0.0]]).T #TODO for debugging
-        # direction = vec/np.linalg.norm(vec)
 
         self.path.flag = 'line'
         self.path.line_origin = waypoint

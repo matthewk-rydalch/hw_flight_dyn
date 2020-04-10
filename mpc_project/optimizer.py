@@ -1,14 +1,12 @@
 import numpy as np
 from scipy.optimize import minimize
 
-from mpc_project.dynamic_model import dynamic_model
 from parameters.aerosonde_parameters import pd0
 
 class optimizer():
     def __init__(self, Ts, time_horizon):
         self.Ts = Ts
         self.N = time_horizon  # in units of Ts
-        self.predict_dynamics = dynamic_model(Ts)
         self.u = np.zeros(time_horizon)
         self.u_bound = np.pi/14.0 #from experimental test
         self.r = 0.5 #gain for optimization
