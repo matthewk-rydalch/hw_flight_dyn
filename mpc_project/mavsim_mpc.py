@@ -8,6 +8,7 @@ import sys
 sys.path.append('..')
 import numpy as np
 import parameters.simulation_parameters as SIM
+import datetime
 
 from chap3.data_viewer import data_viewer
 from chap4.wind_simulation import wind_simulation
@@ -30,9 +31,12 @@ ctrl = autopilot(SIM.ts_simulation)
 obsv = observer(SIM.ts_simulation)
 path_follow = path_follower()
 
+# if the results are plotted
+f = open("TH_25.txt", "a")
+
 #_____mpc parameters______
 Ts_mpc = 1.0
-time_horizon = 50 #in units of Ts_mpc
+time_horizon = 25 #in units of Ts_mpc
 mpc = mpc_manager(Ts_mpc, time_horizon)
 
 #_____target intial pose and velocity________#
@@ -75,6 +79,11 @@ while sim_time < SIM.end_time:
     current_wind = np.array([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]).T #wind messes up the velocity matching, so leave it out.
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
+    #write mav and target positions and the sim and real time to files to be represented
+    currentDT = datetime.datetime.now()
+    current_time = currentDT.minute * 60.0 + currentDT.second + currentDT.microsecond * 1E-6
+    f.write(str(mav.msg_true_state.pn)+' '+str(mav.msg_true_state.pe)+' '+str(target.state.pn)+' '+str(target.state.pe)+' '+str(current_time)+' '+str(sim_time)+'\n')
+
     #-------update viewer-------------
     waypoint_view.update(waypoints, path, mav.msg_true_state, target.state)  # plot path and MAV
     data_view.update(mav.msg_true_state, # true states
@@ -84,3 +93,5 @@ while sim_time < SIM.end_time:
 
     #-------increment time-------------
     sim_time += SIM.ts_simulation
+
+f.close()
